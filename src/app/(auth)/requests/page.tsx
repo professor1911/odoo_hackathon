@@ -62,7 +62,7 @@ export default function RequestsPage() {
       unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
         const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
         setOutgoingRequests(requests);
-        setLoading(false); // Set loading to false once data is received
+        // Do not set loading to false here again, to avoid flickering
       }, (error) => {
         console.error("Error fetching outgoing requests: ", error);
         setLoading(false);
@@ -113,7 +113,7 @@ export default function RequestsPage() {
 
           <TabsContent value="outgoing">
              <div className="space-y-4 max-w-3xl mx-auto pt-4">
-                {loading ? (
+                {loading && incomingRequests.length === 0 ? ( // Only show loader if incoming is also loading
                     <div className="flex justify-center items-center py-10">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
