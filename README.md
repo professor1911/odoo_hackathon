@@ -1,108 +1,138 @@
+<div align="left" style="position: relative;">
+<h1>Skill Swap Platform</h1>
+<p align="left">
+</p>
+<p align="left">
+	<img src="https://img.shields.io/github/license/professor1911/odoo_hackathon?style=default&logo=opensourceinitiative&logoColor=white&color=1b86f3" alt="license">
+	<img src="https://img.shields.io/github/last-commit/professor1911/odoo_hackathon?style=default&logo=git&logoColor=white&color=1b86f3" alt="last-commit">
+	<img src="https://img.shields.io/github/languages/top/professor1911/odoo_hackathon?style=default&color=1b86f3" alt="repo-top-language">
+	<img src="https://img.shields.io/github/languages/count/professor1911/odoo_hackathon?style=default&color=1b86f3" alt="repo-language-count">
+</p>
+<p align="left"><!-- default option, no dependency badges. -->
+</p>
+<p align="left">
+	<!-- default option, no dependency badges. -->
+</p>
+</div>
+<br clear="right">
 
-# Skillshare - AI-Powered Skill Swap Platform
+## 🔗 Table of Contents
 
-## Overview
+- [📍 Overview](#-overview)
+- [👾 Features](#-features)
+- [📁 Project Structure](#-project-structure)
+  - [📂 Project Index](#-project-index)
+- [🚀 Getting Started](#-getting-started)
+  - [☑️ Prerequisites](#-prerequisites)
+  - [⚙️ Installation](#-installation)
+  - [🤖 Usage](#🤖-usage)
+  - [🧪 Testing](#🧪-testing)
+- [📌 Project Roadmap](#-project-roadmap)
+- [🔰 Contributing](#-contributing)
+- [🎗 License](#-license)
+- [🙌 Acknowledgments](#-acknowledgments)
 
-Skillshare is a full-stack web application built with Next.js that allows users to connect with each other to trade or "swap" skills. The platform is designed to foster a community of learning and sharing, where users can both teach what they know and learn something new from others.
+---
 
-The application features a complete user authentication system, profile management, a skill discovery dashboard, an AI-powered recommendation engine, and a real-time messaging system for coordinating swaps.
+## 📍 Overview
 
-## Core Features
+Skillshare is a full-stack web application built with Next.js that allows users to connect with each other to trade or "swap" skills. The platform is designed to foster a community of learning and sharing, where users can both teach what they know and learn something new from others. The application features a complete user authentication system, profile management, a skill discovery dashboard, an AI-powered recommendation engine, and a real-time messaging system for coordinating swaps.
 
-- **User Authentication**: Secure sign-up and login functionality using Firebase Authentication.
-- **User Profile Management**: Users can create and manage their profiles, including their bio, profile picture, skills they offer, skills they want to learn, and their general availability.
-- **Skill Discovery**: A searchable and filterable dashboard where users can find other people based on skills or names.
-- **AI Recommendations**: A dedicated "For You" page that uses Google's Gemini model via Genkit to provide personalized recommendations for potential skill swap partners based on profile compatibility.
-- **Swap Request System**: Users can send, receive, accept, or reject skill swap requests.
-- **Real-time Swap Sessions**: Once a request is accepted, a private chat session is created where users can coordinate their skill swap using real-time messaging powered by Firestore.
-- **Rating and Feedback**: After a swap is completed, users can rate their partner, contributing to a community-based reputation system.
-- **Responsive Design**: The entire application is fully responsive and optimized for a seamless experience on both desktop and mobile devices.
+---
 
-## Tech Stack
+## 👾 Features
 
-This project is built with a modern, production-ready tech stack:
+🔐 User Authentication: Secure sign-up and login functionality powered by Firebase Authentication
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **UI Framework**: [React](https://reactjs.org/)
-- **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Backend & Database**: [Firebase](https://firebase.google.com/) (Authentication, Firestore, Storage)
-- **Generative AI**: [Genkit](https://firebase.google.com/docs/genkit) with the Gemini API
-- **Fonts**: PT Sans for body, Space Grotesk for headlines.
+👤 User Profile Management: Create and manage comprehensive profiles including bio, profile picture, skills offered, skills wanted, and availability preferences
 
-## Getting Started
+🔍 Skill Discovery: Searchable and filterable dashboard to discover other users based on specific skills or names
 
-To get the project up and running on your local machine, follow these steps.
+🤖 AI Recommendations: Dedicated "For You" page leveraging Google's Gemini model via Genkit to provide personalized recommendations for potential skill swap partners
 
-### Prerequisites
+📨 Swap Request System: Send, receive, accept, or reject skill swap requests with seamless request management
 
-- Node.js (v18 or later)
-- An active Firebase project.
+💬 Real-time Swap Sessions: Private chat sessions for coordinating skill swaps using real-time messaging powered by Firestore
 
-### 1. Set Up Environment Variables
+⭐ Rating and Feedback: Community-based reputation system allowing users to rate their swap partners and build trust
 
-First, you need to configure your Firebase project credentials.
+📱 Responsive Design: Fully responsive design optimized for seamless user experience across desktop and mobile devices
 
-1.  Create a file named `.env.local` in the root of the project.
-2.  Go to your Firebase project settings and create a new Web App.
-3.  Copy the `firebaseConfig` object values into your `.env.local` file. It should look like this:
+---
 
-```bash
-# Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-NEXT_PUBLIC_FIREBASE_APP_ID=1:...:web:...
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-... # Optional
+## 📁 Project Structure
 
-# Genkit (Google AI)
-GOOGLE_API_KEY=your_google_ai_api_key # Get this from Google AI Studio
+```sh
+└── skill_swap_platform/
+    ├── README.md
+    ├── apphosting.yaml
+    ├── components.json
+    ├── docs
+    ├── firebase.json
+    ├── firestore.indexes.json
+    ├── firestore.rules
+    ├── next.config.ts
+    ├── package-lock.json
+    ├── package.json
+    ├── postcss.config.mjs
+    ├── src
+    ├── tailwind.config.ts
+    └── tsconfig.json
 ```
 
-### 2. Install Dependencies
 
-Install the project dependencies using npm:
+---
+## 🚀 Getting Started
 
-```bash
-npm install
+### ☑️ Prerequisites
+
+Before getting started with skill swap platform, ensure your runtime environment meets the following requirements:
+
+- **Programming Language:** TypeScript
+- **Package Manager:** Npm
+
+
+### ⚙️ Installation
+
+Install odoo_hackathon using one of the following methods:
+
+**Build from source:**
+
+1. Clone the odoo_hackathon repository:
+```sh
+❯ git clone https://github.com/professor1911/odoo_hackathon
 ```
 
-### 3. Run the Development Servers
+2. Navigate to the project directory:
+```sh
+❯ cd odoo_hackathon
+```
 
-This project requires two development servers to run concurrently: one for the Next.js frontend and one for the Genkit AI flows.
+3. Install the project dependencies:
 
--   **Start the Next.js app:**
-    ```bash
-    npm run dev
-    ```
-    This will start the main application, typically on `http://localhost:9002`.
 
--   **Start the Genkit server:**
-    Open a **new terminal window** and run:
-    ```bash
-    npm run genkit:watch
-    ```
-    This starts the Genkit development server, which watches for changes in your AI flows.
+**Using `npm`** &nbsp; [<img align="center" src="https://img.shields.io/badge/npm-CB3837.svg?style={badge_style}&logo=npm&logoColor=white" />](https://www.npmjs.com/)
 
-You can now access the application in your browser at the URL provided by the Next.js server.
+```sh
+❯ npm install
+```
 
-## Project Structure
 
-Here's a brief overview of the key directories in the project:
 
--   `src/app/`: Contains all the pages and layouts, following the Next.js App Router structure.
-    -   `src/app/(auth)/`: A route group for all pages that require user authentication.
-    -   `src/app/(auth)/layout.tsx`: The main layout for the authenticated part of the app, including the sidebar.
--   `src/components/`: Contains all the reusable React components.
-    -   `src/components/ui/`: Auto-generated components from ShadCN UI.
-    -   `src/components/layout/`: Components related to the overall page structure (Header, Sidebar).
-    -   Other folders are organized by feature (e.g., `profile`, `requests`, `session`).
--   `src/ai/`: Contains all the Genkit-related code for AI functionality.
-    -   `src/ai/flows/`: Defines the AI flows, such as the skill swap recommendation engine.
--   `src/lib/`: Contains utility functions, type definitions (`types.ts`), and Firebase configuration (`firebase.ts`).
--   `src/context/`: Contains React context providers, such as the `AuthContext` for managing user authentication state.
--   `public/`: Contains static assets like images and fonts.
 
+### 🤖 Usage
+Run odoo_hackathon using the following command:
+**Using `npm`** &nbsp; [<img align="center" src="https://img.shields.io/badge/npm-CB3837.svg?style={badge_style}&logo=npm&logoColor=white" />](https://www.npmjs.com/)
+
+```sh
+❯ npm start
+```
+
+
+### 🧪 Testing
+Run the test suite using the following command:
+**Using `npm`** &nbsp; [<img align="center" src="https://img.shields.io/badge/npm-CB3837.svg?style={badge_style}&logo=npm&logoColor=white" />](https://www.npmjs.com/)
+
+```sh
+❯ npm test
+```
