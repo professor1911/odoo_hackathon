@@ -10,10 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { User, SwapRequest } from "@/lib/types";
 import { ArrowRight, Check, X, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from '@/context/auth-context';
 
 function getStatusBadge(status: SwapRequest['status']) {
   switch (status) {
@@ -40,10 +39,7 @@ const getInitials = (name: string) => {
 };
 
 export function RequestCard({ request, type }: { request: SwapRequest, type: 'incoming' | 'outgoing' }) {
-  const { user: authUser, loading: authLoading } = useAuth();
   const [formattedDate, setFormattedDate] = useState('');
-  const [otherUser, setOtherUser] = useState<Partial<User> | null>(null);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -60,36 +56,7 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
       }
     }
   }, [request.createdAt]);
-
-  useEffect(() => {
-    const otherUserId = type === 'incoming' ? request.fromUserId : request.toUserId;
-    const name = type === 'incoming' ? request.fromUserName : request.toUserName;
-    const avatar = type === 'incoming' ? request.fromUserAvatar : request.toUserAvatar;
-    
-    async function fetchOtherUser() {
-      if (otherUserId) {
-        setLoading(true);
-        // Use cached details if available
-        if (name && avatar) {
-            setOtherUser({ id: otherUserId, name, avatarUrl: avatar });
-            setLoading(false);
-            return;
-        }
-        // Fallback to fetch from DB
-        const userDocRef = doc(db, "users", otherUserId);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-            setOtherUser(docSnap.data() as User);
-        }
-        setLoading(false);
-      }
-    }
-
-    if (!authLoading) {
-        fetchOtherUser();
-    }
-  }, [request, type, authLoading]);
-
+  
   const handleRequestUpdate = async (newStatus: 'accepted' | 'rejected') => {
     setActionLoading(true);
     try {
@@ -111,15 +78,9 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
     }
   };
 
-  if (loading || authLoading || !otherUser) {
-    return (
-        <Card className="h-48 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
-        </Card>
-    );
-  }
-
-  const initials = getInitials(otherUser.name || '');
+  const otherUserName = type === 'incoming' ? request.fromUserName : request.toUserName;
+  const otherUserAvatar = type === 'incoming' ? request.fromUserAvatar : request.toUserAvatar;
+  const initials = getInitials(otherUserName || '');
 
   return (
     <Card>
@@ -127,12 +88,12 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
         <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
             <Avatar>
-                <AvatarImage src={otherUser.avatarUrl} alt={otherUser.name} />
+                <AvatarImage src={otherUserAvatar} alt={otherUserName} />
                 <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div>
                 <CardTitle className="text-base font-headline">
-                    {type === 'incoming' ? `${otherUser.name} sent you a request` : `You sent a request to ${otherUser.name}`}
+                    {type === 'incoming' ? `${otherUserName} sent you a request` : `You sent a request to ${otherUserName}`}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">{formattedDate || '...'}</p>
             </div>
