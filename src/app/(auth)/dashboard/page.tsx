@@ -1,11 +1,11 @@
+
 "use client";
 
 import { Header } from "@/components/layout/header";
 import { Input } from "@/components/ui/input";
 import { UserCard } from "@/components/user/user-card";
-import { otherUsers } from "@/lib/data";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,17 +15,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
+import { User } from "@/lib/types";
 
 const SKILL_FILTERS = ["React", "Python", "Cooking", "Guitar", "Marketing", "Photography"];
 
 export default function DashboardPage() {
+  const { user: authUser, loading: authLoading } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage, setUsersPerPage] = useState(10);
 
+  useEffect(() => {
+    async function fetchUsers() {
+      if (!authUser) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const usersCollectionRef = collection(db, "users");
+        const q = query(usersCollectionRef, where("id", "!=", authUser.uid));
+        const querySnapshot = await getDocs(q);
+        const fetchedUsers = querySnapshot.docs.map(doc => doc.data() as User);
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (!authLoading) {
+      fetchUsers();
+    }
+  }, [authUser, authLoading]);
+
   const filteredUsers = useMemo(() => {
-    return otherUsers
+    return users
       .filter((user) =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.skillsOffered.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -35,7 +69,7 @@ export default function DashboardPage() {
         if (!activeFilter) return true;
         return user.skillsOffered.includes(activeFilter) || user.skillsWanted.includes(activeFilter);
       });
-  }, [searchQuery, activeFilter]);
+  }, [users, searchQuery, activeFilter]);
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const paginatedUsers = filteredUsers.slice(
@@ -94,15 +128,22 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-          <div className="space-y-4">
-            {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user) => (
-                    <UserCard key={user.id} user={user} layout="horizontal" />
-                ))
-            ) : (
-                <p className="text-center text-muted-foreground py-10">No users found.</p>
-            )}
-          </div>
+          
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {paginatedUsers.length > 0 ? (
+                  paginatedUsers.map((user) => (
+                      <UserCard key={user.id} user={user} layout="horizontal" />
+                  ))
+              ) : (
+                  <p className="text-center text-muted-foreground py-10">No users found.</p>
+              )}
+            </div>
+          )}
 
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-8 space-x-4">
