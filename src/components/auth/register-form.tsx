@@ -4,6 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,18 +41,44 @@ export function RegisterForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, you'd create a user here.
-      console.log("New user created:", values);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // Update Firebase auth profile
+      await updateProfile(user, { displayName: values.name });
+
+      // Create a new user document in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        id: user.uid,
+        name: values.name,
+        email: values.email,
+        avatarUrl: '', // Will be updated later
+        bio: 'Welcome to Skillshare! Please update your bio.',
+        skillsOffered: [],
+        skillsWanted: [],
+        availability: 'Not set',
+        rating: 0,
+        reviews: 0,
+      });
+
       toast({
         title: "Account Created!",
         description: "Welcome to Skillshare. You can now log in.",
       });
       router.push("/");
-    }, 1000);
+    } catch (error: any) {
+        console.error("Registration error:", error);
+        toast({
+            variant: "destructive",
+            title: "Registration Failed",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

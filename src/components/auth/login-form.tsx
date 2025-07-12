@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -18,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -35,14 +37,21 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, you'd handle auth here.
-      // For this demo, we'll just redirect.
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
       router.push("/dashboard");
-    }, 1000);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message || "An unexpected error occurred.",
+      });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
