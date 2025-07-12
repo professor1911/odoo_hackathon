@@ -1,13 +1,19 @@
-import { users } from "@/lib/data";
+"use client";
+
+import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, Mail, Calendar, Sparkles, Heart } from "lucide-react";
 import { SkillBadge } from "@/components/shared/skill-badge";
+import { User } from "@/lib/types";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { RequestSwapDialog } from "@/components/requests/request-swap-dialog";
 
 const getInitials = (name: string) => {
+  if (!name) return "";
   const names = name.split(' ');
   if (names.length > 1) {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -16,7 +22,37 @@ const getInitials = (name: string) => {
 };
 
 export default function UserProfilePage({ params }: { params: { userId: string } }) {
-  const user = users.find((u) => u.id === params.userId);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const userDocRef = doc(db, "users", params.userId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          setUser(userDocSnap.data() as User);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (params.userId) {
+      fetchUser();
+    }
+  }, [params.userId]);
+
+
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-full">
+            <div className="animate-pulse">Loading profile...</div>
+        </div>
+    );
+  }
 
   if (!user) {
     notFound();
@@ -27,9 +63,7 @@ export default function UserProfilePage({ params }: { params: { userId: string }
   return (
     <div className="flex flex-col h-full">
       <Header title="User Profile">
-        <Button>
-          Request Swap
-        </Button>
+        <RequestSwapDialog targetUser={user} />
       </Header>
       <div className="p-6 flex-1 overflow-auto bg-background">
         <div className="max-w-4xl mx-auto">

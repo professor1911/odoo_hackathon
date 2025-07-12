@@ -1,17 +1,63 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { swapRequests, users, currentUser } from "@/lib/data";
-import { SwapRequest } from "@/lib/types";
-import { ArrowRight, Check, X } from "lucide-react";
 import { RequestCard } from "@/components/requests/request-card";
+import { SwapRequest } from "@/lib/types";
+import { useAuth } from "@/context/auth-context";
+import { db } from "@/lib/firebase";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
 
 export default function RequestsPage() {
-  const incomingRequests = swapRequests.filter(r => r.toUserId === currentUser.id);
-  const outgoingRequests = swapRequests.filter(r => r.fromUserId === currentUser.id);
+  const { user: authUser } = useAuth();
+  const [incomingRequests, setIncomingRequests] = useState<SwapRequest[]>([]);
+  const [outgoingRequests, setOutgoingRequests] = useState<SwapRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authUser) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    // Listener for incoming requests
+    const incomingQuery = query(
+      collection(db, "swapRequests"),
+      where("toUserId", "==", authUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
+      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+      setIncomingRequests(requests);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching incoming requests: ", error);
+      setLoading(false);
+    });
+
+    // Listener for outgoing requests
+    const outgoingQuery = query(
+      collection(db, "swapRequests"),
+      where("fromUserId", "==", authUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
+      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+      setOutgoingRequests(requests);
+    }, (error) => {
+      console.error("Error fetching outgoing requests: ", error);
+    });
+
+    return () => {
+      unsubscribeIncoming();
+      unsubscribeOutgoing();
+    };
+
+  }, [authUser]);
 
   return (
     <div className="flex flex-col h-full">
@@ -25,18 +71,28 @@ export default function RequestsPage() {
             <TabsTrigger value="incoming">Incoming ({incomingRequests.length})</TabsTrigger>
             <TabsTrigger value="outgoing">Outgoing ({outgoingRequests.length})</TabsTrigger>
           </TabsList>
+          
           <TabsContent value="incoming">
             <div className="space-y-4 max-w-3xl mx-auto pt-4">
-                {incomingRequests.length > 0 ? (
-                    incomingRequests.map(req => <RequestCard key={req.id} request={req} type="incoming" />)
-                ) : (
-                    <p className="text-center text-muted-foreground py-10">No incoming requests yet.</p>
-                )}
+              {loading ? (
+                 <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                 </div>
+              ) : incomingRequests.length > 0 ? (
+                incomingRequests.map(req => <RequestCard key={req.id} request={req} type="incoming" />)
+              ) : (
+                <p className="text-center text-muted-foreground py-10">No incoming requests yet.</p>
+              )}
             </div>
           </TabsContent>
+
           <TabsContent value="outgoing">
              <div className="space-y-4 max-w-3xl mx-auto pt-4">
-                {outgoingRequests.length > 0 ? (
+                {loading ? (
+                    <div className="flex justify-center items-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                ) : outgoingRequests.length > 0 ? (
                     outgoingRequests.map(req => <RequestCard key={req.id} request={req} type="outgoing" />)
                 ) : (
                     <p className="text-center text-muted-foreground py-10">You haven't sent any requests.</p>
