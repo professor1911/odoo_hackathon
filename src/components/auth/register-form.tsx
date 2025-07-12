@@ -69,7 +69,7 @@ export function RegisterForm() {
         title: "Account Created!",
         description: "Welcome to Skillshare. You can now log in.",
       });
-      router.push("/");
+      router.push("/login");
     } catch (error: any) {
         console.error("Registration error:", error);
         toast({

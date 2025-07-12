@@ -1,9 +1,9 @@
 
-import { RegisterForm } from "@/components/auth/register-form";
+import { LoginForm } from "@/components/auth/login-form";
 import { Handshake } from "lucide-react";
 import Link from "next/link";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-8">
@@ -12,20 +12,20 @@ export default function RegisterPage() {
                 <Handshake className="h-8 w-8" />
             </div>
           <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground font-headline">
-            Create an Account
+            Welcome Back!
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">
-            Join the Skillshare community today!
+            Log in to continue your skill-swapping journey.
           </p>
         </div>
-        <RegisterForm />
-         <p className="px-8 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+        <LoginForm />
+        <p className="px-8 text-center text-sm text-muted-foreground">
+          Don't have an account?{" "}
           <Link
-            href="/login"
+            href="/register"
             className="underline underline-offset-4 hover:text-primary"
           >
-            Login here
+            Register here
           </Link>
           .
         </p>
