@@ -203,7 +203,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         : 'any time';
       const derivedAvailability = `${days}; available during ${times}`;
       
-      const updatedUserData = {
+      const updatedFirestoreData = {
           name: data.name,
           bio: data.bio,
           skillsOffered: data.skillsOffered,
@@ -211,16 +211,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
           availability: derivedAvailability,
           avatarUrl: newAvatarUrl
       };
-
-      // Update Firestore
-      const userDocRef = doc(db, "users", authUser.uid);
-      await updateDoc(userDocRef, updatedUserData);
-
-      // Update Firebase Auth profile
-      await updateProfile(authUser, {
+      
+      const updatedAuthData = {
           displayName: data.name,
           photoURL: newAvatarUrl,
-      });
+      };
+
+      // Perform updates in parallel
+      const userDocRef = doc(db, "users", authUser.uid);
+      await Promise.all([
+          updateDoc(userDocRef, updatedFirestoreData),
+          updateProfile(authUser, updatedAuthData)
+      ]);
+
 
       toast({
         title: "Profile Updated",
