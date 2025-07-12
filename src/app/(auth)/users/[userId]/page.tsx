@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,14 +22,18 @@ const getInitials = (name: string) => {
   return name.substring(0, 2).toUpperCase();
 };
 
-export default function UserProfilePage({ params }: { params: { userId: string } }) {
+export default function UserProfilePage() {
+  const params = useParams();
+  const userId = params.userId as string;
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUser() {
+      if (!userId) return;
       try {
-        const userDocRef = doc(db, "users", params.userId);
+        const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
           setUser(userDocSnap.data() as User);
@@ -40,10 +45,8 @@ export default function UserProfilePage({ params }: { params: { userId: string }
       }
     }
 
-    if (params.userId) {
-      fetchUser();
-    }
-  }, [params.userId]);
+    fetchUser();
+  }, [userId]);
 
 
   if (loading) {
