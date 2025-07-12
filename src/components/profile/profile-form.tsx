@@ -192,11 +192,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
       }
 
       // Derive a readable string from the structured availability data
-      const days = data.availabilityDays && data.availabilityDays.length > 0
-        ? `${data.availabilityDays.length} day(s) selected`
+      const availabilityDays = data.availabilityDays || [];
+      const availabilityTimes = data.availabilityTimes || [];
+
+      const days = availabilityDays.length > 0
+        ? `${availabilityDays.length} day(s) selected`
         : 'Flexible days';
-      const times = data.availabilityTimes && data.availabilityTimes.length > 0
-        ? data.availabilityTimes.join(', ')
+      const times = availabilityTimes.length > 0
+        ? availabilityTimes.join(', ')
         : 'any time';
       const derivedAvailability = `${days}; available during ${times}`;
       
