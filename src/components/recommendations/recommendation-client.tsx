@@ -63,12 +63,14 @@ export function RecommendationClient() {
       const result = await skillSwapRecommendation({
         userSkills: currentUser.skillsOffered,
         userWants: currentUser.skillsWanted,
+        userAvailability: currentUser.availability,
         otherUserProfiles: otherUsers.map(u => ({
             userId: u.id,
             skillsOffered: u.skillsOffered,
             skillsWanted: u.skillsWanted,
+            availability: u.availability,
         })),
-        numberOfRecommendations: 3,
+        numberOfRecommendations: 5,
       });
       setRecommendations(result);
     } catch (e) {
