@@ -27,43 +27,48 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
     return (
        <Card className="transition-shadow hover:shadow-md">
         <div className="flex flex-col sm:flex-row items-center p-4 gap-4">
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-4 flex-shrink-0 self-start sm:self-center">
              <Avatar className="h-16 w-16">
               <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div className="sm:hidden">
-              <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{user.rating} ({user.reviews} reviews)</span>
+          </div>
+          <div className="flex-1 w-full">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span>{user.rating} ({user.reviews} reviews)</span>
+                </div>
               </div>
+               <Link href={`/users/${user.id}`} className="hidden sm:block">
+                <Button className="font-semibold">
+                  View Profile <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            
+             <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className="text-sm font-semibold w-14 text-muted-foreground">Offers:</span>
+                <div className="flex flex-wrap gap-1">
+                  {user.skillsOffered.slice(0, 4).map((skill) => (
+                      <SkillBadge key={skill} skill={skill} />
+                  ))}
+                  {user.skillsOffered.length > 4 && <SkillBadge skill={`+${user.skillsOffered.length - 4}`} />}
+                </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+                <span className="text-sm font-semibold w-14 text-muted-foreground">Wants:</span>
+                 <div className="flex flex-wrap gap-1">
+                  {user.skillsWanted.slice(0, 4).map((skill) => (
+                      <SkillBadge key={skill} skill={skill} variant="outline" />
+                  ))}
+                  {user.skillsWanted.length > 4 && <SkillBadge skill={`+${user.skillsWanted.length - 4}`} variant="outline" />}
+                </div>
             </div>
           </div>
-          <div className="flex-1 text-center sm:text-left">
-            <div className="hidden sm:block">
-              <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>{user.rating} ({user.reviews} reviews)</span>
-              </div>
-            </div>
-             <div className="flex flex-wrap gap-1 justify-center sm:justify-start mt-2">
-                <span className="text-sm font-semibold mr-1">Offers:</span>
-                {user.skillsOffered.slice(0, 4).map((skill) => (
-                    <SkillBadge key={skill} skill={skill} />
-                ))}
-                {user.skillsOffered.length > 4 && <SkillBadge skill={`+${user.skillsOffered.length - 4}`} />}
-            </div>
-            <div className="flex flex-wrap gap-1 justify-center sm:justify-start mt-1">
-                <span className="text-sm font-semibold mr-1">Wants:</span>
-                {user.skillsWanted.slice(0, 4).map((skill) => (
-                    <SkillBadge key={skill} skill={skill} variant="outline" />
-                ))}
-                {user.skillsWanted.length > 4 && <SkillBadge skill={`+${user.skillsWanted.length - 4}`} variant="outline" />}
-            </div>
-          </div>
-          <Link href={`/users/${user.id}`} className="w-full sm:w-auto">
+          <Link href={`/users/${user.id}`} className="w-full sm:hidden">
             <Button className="w-full font-semibold">
               View Profile <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
