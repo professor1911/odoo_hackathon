@@ -30,11 +30,14 @@ export default function RequestsPage() {
       return;
     }
 
-    setLoading(true);
+    // This effect handles setting up the Firestore listeners.
+    // It will only run when authUser.uid is available and will clean up on unmount.
     let unsubscribeIncoming: Unsubscribe | undefined;
     let unsubscribeOutgoing: Unsubscribe | undefined;
 
     try {
+      setLoading(true);
+      
       // Listener for incoming requests
       const incomingQuery = query(
         collection(db, "swapRequests"),
@@ -44,7 +47,7 @@ export default function RequestsPage() {
       unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
         const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
         setIncomingRequests(requests);
-        setLoading(false);
+        setLoading(false); // Set loading to false once data is received
       }, (error) => {
         console.error("Error fetching incoming requests: ", error);
         setLoading(false);
@@ -59,8 +62,7 @@ export default function RequestsPage() {
       unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
         const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
         setOutgoingRequests(requests);
-        // We can set loading to false in either listener, but doing it in both is fine.
-        setLoading(false);
+        setLoading(false); // Set loading to false once data is received
       }, (error) => {
         console.error("Error fetching outgoing requests: ", error);
         setLoading(false);
@@ -69,9 +71,9 @@ export default function RequestsPage() {
         console.error("Failed to set up listeners:", error);
         setLoading(false);
     }
-
+    
     // Cleanup function to unsubscribe from listeners when the component unmounts
-    // or when the auth state changes.
+    // or when the authUser changes.
     return () => {
       if (unsubscribeIncoming) {
         unsubscribeIncoming();
@@ -80,7 +82,6 @@ export default function RequestsPage() {
         unsubscribeOutgoing();
       }
     };
-
   }, [authUser, authLoading]);
 
   return (
