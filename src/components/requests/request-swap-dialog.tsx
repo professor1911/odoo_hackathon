@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -43,17 +44,22 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    if (authUser && !authLoading) {
-      setLoadingUser(true);
-      const userDocRef = doc(db, "users", authUser.uid);
-      getDoc(userDocRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          setCurrentUser(docSnap.data() as User);
+    async function fetchCurrentUser() {
+        if (authUser) {
+            setLoadingUser(true);
+            const userDocRef = doc(db, "users", authUser.uid);
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                setCurrentUser(docSnap.data() as User);
+            }
+            setLoadingUser(false);
         }
-      }).finally(() => setLoadingUser(false));
     }
-     if (!authUser && !authLoading) {
-      setLoadingUser(false);
+    
+    if (!authLoading) {
+        fetchCurrentUser();
+    } else {
+        setLoadingUser(true);
     }
   }, [authUser, authLoading]);
 

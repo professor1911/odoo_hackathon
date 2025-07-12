@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -33,7 +34,6 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     async function fetchUser() {
-      if (!userId || authLoading) return;
       setLoading(true);
       try {
         const userDocRef = doc(db, "users", userId);
@@ -51,7 +51,9 @@ export default function UserProfilePage() {
       }
     }
 
-    fetchUser();
+    if (!authLoading && userId) {
+        fetchUser();
+    }
   }, [userId, authLoading]);
 
 

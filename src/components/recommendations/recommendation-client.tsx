@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,7 +18,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore";
 
 export function RecommendationClient() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<SkillSwapRecommendationOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +43,11 @@ export function RecommendationClient() {
       const others = querySnapshot.docs.map(doc => doc.data() as User);
       setOtherUsers(others);
     }
-
-    fetchUsers();
-  }, [authUser]);
+    
+    if (!authLoading && authUser) {
+        fetchUsers();
+    }
+  }, [authUser, authLoading]);
 
   const getRecommendations = async () => {
     if (!currentUser) {

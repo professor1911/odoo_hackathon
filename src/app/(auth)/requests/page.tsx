@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,13 +12,13 @@ import { collection, query, where, onSnapshot, orderBy } from "firebase/firestor
 import { Loader2 } from "lucide-react";
 
 export default function RequestsPage() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [incomingRequests, setIncomingRequests] = useState<SwapRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<SwapRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authUser) {
+    if (authLoading || !authUser) {
       setLoading(false);
       return;
     }
@@ -57,7 +58,7 @@ export default function RequestsPage() {
       unsubscribeOutgoing();
     };
 
-  }, [authUser]);
+  }, [authUser, authLoading]);
 
   return (
     <div className="flex flex-col h-full">

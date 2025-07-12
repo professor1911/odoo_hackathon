@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -39,10 +40,10 @@ const getInitials = (name: string) => {
 };
 
 export function RequestCard({ request, type }: { request: SwapRequest, type: 'incoming' | 'outgoing' }) {
-  const { loading: authLoading } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [formattedDate, setFormattedDate] = useState('');
   const [otherUser, setOtherUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -62,6 +63,10 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
                 setOtherUser(docSnap.data() as User);
             }
         }).finally(() => setLoading(false));
+    } else if (authLoading) {
+        setLoading(true);
+    } else {
+        setLoading(false);
     }
   }, [request, type, authLoading]);
 
