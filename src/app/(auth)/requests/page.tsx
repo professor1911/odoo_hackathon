@@ -15,37 +15,32 @@ export default function RequestsPage() {
   const { user: authUser, loading: authLoading } = useAuth();
   const [incomingRequests, setIncomingRequests] = useState<SwapRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<SwapRequest[]>([]);
-  const [loadingIncoming, setLoadingIncoming] = useState(true);
-  const [loadingOutgoing, setLoadingOutgoing] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !authUser) {
-      // If auth is loading or there's no user, we're not ready to fetch.
-      // We also clear out any existing data.
-      setIncomingRequests([]);
-      setOutgoingRequests([]);
-      setLoadingIncoming(true);
-      setLoadingOutgoing(true);
+    // This effect should only run once to set up the listeners.
+    // The auth check inside ensures we don't query until we have a user.
+    if (!authUser) {
+      setLoading(false); // Not logged in, so not loading.
       return;
     }
 
     const requestsRef = collection(db, "swapRequests");
-    const unsubscribers: Unsubscribe[] = [];
-
+    
     // Listener for incoming requests
     const incomingQuery = query(
       requestsRef,
       where("toUserId", "==", authUser.uid),
       orderBy("createdAt", "desc")
     );
-    unsubscribers.push(onSnapshot(incomingQuery, (querySnapshot) => {
+    const unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
       const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
       setIncomingRequests(requests);
-      setLoadingIncoming(false);
+      setLoading(false); // Stop loading once we have data
     }, (error) => {
       console.error("Error fetching incoming requests: ", error);
-      setLoadingIncoming(false);
-    }));
+      setLoading(false);
+    });
 
     // Listener for outgoing requests
     const outgoingQuery = query(
@@ -53,23 +48,24 @@ export default function RequestsPage() {
       where("fromUserId", "==", authUser.uid),
       orderBy("createdAt", "desc")
     );
-    unsubscribers.push(onSnapshot(outgoingQuery, (querySnapshot) => {
+    const unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
       const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
       setOutgoingRequests(requests);
-      setLoadingOutgoing(false);
+      setLoading(false); // Stop loading once we have data
     }, (error) => {
       console.error("Error fetching outgoing requests: ", error);
-      setLoadingOutgoing(false);
-    }));
+      setLoading(false);
+    });
     
-    // Cleanup function: This is crucial for preventing memory leaks and Firestore errors.
-    // It will be called when the component unmounts or when authUser/authLoading changes.
+    // Cleanup function: This is crucial for preventing memory leaks.
+    // It will be called when the component unmounts.
     return () => {
-      unsubscribers.forEach(unsub => unsub());
+      unsubscribeIncoming();
+      unsubscribeOutgoing();
     };
-  }, [authUser, authLoading]);
+  }, [authUser]); // Depend only on authUser to re-run if the user logs in/out
 
-  const isLoading = authLoading || loadingIncoming || loadingOutgoing;
+  const isLoading = authLoading || loading;
 
   return (
     <div className="flex flex-col h-full">
