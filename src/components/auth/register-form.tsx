@@ -56,7 +56,7 @@ export function RegisterForm() {
         id: user.uid,
         name: values.name,
         email: values.email,
-        avatarUrl: `https://placehold.co/100x100.png`,
+        avatarUrl: `https://storage.googleapis.com/project-rsc-bucket/vignesh_testing/default_avatar.png`,
         bio: 'Welcome to Skillshare! Please update your bio.',
         skillsOffered: [],
         skillsWanted: [],

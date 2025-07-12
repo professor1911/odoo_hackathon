@@ -37,7 +37,7 @@ export default function ProfilePage() {
             id: authUser.uid,
             name: authUser.displayName || "New User",
             email: authUser.email || "",
-            avatarUrl: authUser.photoURL || `https://placehold.co/100x100.png`,
+            avatarUrl: authUser.photoURL || `https://storage.googleapis.com/project-rsc-bucket/vignesh_testing/default_avatar.png`,
             bio: 'Welcome to Skillshare! Please update your bio.',
             skillsOffered: [],
             skillsWanted: [],
