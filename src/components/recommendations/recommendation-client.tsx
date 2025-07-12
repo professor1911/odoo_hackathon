@@ -82,13 +82,11 @@ export function RecommendationClient() {
   };
 
   const getRecommendedUser = (userId: string): User | undefined => {
-    // We search both other users and all users from mock data just in case
-    // some users haven't been created in firestore yet during testing
-    return otherUsers.find(u => u.id === userId) || allMockUsers.find(u => u.id === userId);
+    return otherUsers.find(u => u.id === userId);
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <Card className="bg-primary/5 border-primary/20">
         <CardHeader>
           <CardTitle className="font-headline text-primary flex items-center gap-2">
@@ -124,17 +122,12 @@ export function RecommendationClient() {
              {recommendations.recommendations.length === 0 ? (
                 <p className="text-center text-muted-foreground py-10">No recommendations found at this time. Try updating your skills!</p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
                     {recommendations.recommendations.map(rec => {
                         const user = getRecommendedUser(rec.userId);
                         if (!user) return null;
                         return (
-                            <div key={rec.userId}>
-                                <UserCard user={user} />
-                                <div className="mt-2 p-3 bg-accent/20 rounded-md border border-accent/30 text-sm text-accent-foreground/80">
-                                    <span className="font-semibold text-accent-foreground">Reason:</span> {rec.reason}
-                                </div>
-                            </div>
+                            <UserCard key={rec.userId} user={user} layout="horizontal" />
                         )
                     })}
                 </div>
