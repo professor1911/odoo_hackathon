@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarIcon, X, Loader2, Upload } from "lucide-react";
+import { X, Loader2, Upload } from "lucide-react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
@@ -35,9 +35,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { auth, db, storage } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
@@ -46,6 +43,16 @@ const availabilityTimeSlots = [
   { id: "mornings", label: "Mornings (9am - 12pm)" },
   { id: "afternoons", label: "Afternoons (12pm - 5pm)" },
   { id: "evenings", label: "Evenings (5pm - 9pm)" },
+] as const;
+
+const daysOfWeek = [
+    { id: 'sunday', label: 'Sunday' },
+    { id: 'monday', label: 'Monday' },
+    { id: 'tuesday', label: 'Tuesday' },
+    { id: 'wednesday', label: 'Wednesday' },
+    { id: 'thursday', label: 'Thursday' },
+    { id: 'friday', label: 'Friday' },
+    { id: 'saturday', label: 'Saturday' },
 ] as const;
 
 
@@ -61,7 +68,7 @@ const profileFormSchema = z.object({
   skillsOffered: z.array(z.string()).min(1, "Please list at least one skill you can offer."),
   skillsWanted: z.array(z.string()).min(1, "Please list at least one skill you want to learn."),
   availability: z.string().min(1, "Please describe your availability."), // Keeping this for compatibility, will derive it.
-  availabilityDays: z.array(z.date()).optional(),
+  availabilityDays: z.array(z.string()).optional(),
   availabilityTimes: z.array(z.string()).optional(),
 });
 
@@ -140,11 +147,24 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   const initials = getInitials(user.name);
 
-  // A simple way to parse the string availability back into dates and times
-  const initialAvailability = {
-    days: user.availability.includes("Weekday") ? [new Date()] : [], // Placeholder
-    times: availabilityTimeSlots.filter(slot => user.availability.toLowerCase().includes(slot.id.slice(0, -1))).map(s => s.id)
-  };
+  // Parse availability string into form values
+  const parseAvailability = (availabilityString: string) => {
+    const parts = availabilityString.split(';').map(p => p.trim());
+    const daysPart = parts.find(p => p.toLowerCase().includes('days')) || '';
+    const timesPart = parts.find(p => p.toLowerCase().includes('during')) || '';
+
+    const selectedDays = daysOfWeek
+      .filter(day => daysPart.toLowerCase().includes(day.label.toLowerCase()))
+      .map(day => day.id);
+
+    const selectedTimes = availabilityTimeSlots
+      .filter(slot => timesPart.toLowerCase().includes(slot.id))
+      .map(slot => slot.id);
+
+    return { days: selectedDays, times: selectedTimes };
+  }
+
+  const initialAvailability = parseAvailability(user.availability);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -192,16 +212,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
       }
 
       // Derive a readable string from the structured availability data
-      const availabilityDays = data.availabilityDays || [];
-      const availabilityTimes = data.availabilityTimes || [];
+      const selectedDayLabels = (data.availabilityDays || [])
+        .map(dayId => daysOfWeek.find(d => d.id === dayId)?.label)
+        .filter(Boolean);
 
-      const days = availabilityDays.length > 0
-        ? `${availabilityDays.length} day(s) selected`
+      const daysString = selectedDayLabels.length > 0
+        ? `Available on ${selectedDayLabels.join(', ')}`
         : 'Flexible days';
-      const times = availabilityTimes.length > 0
-        ? availabilityTimes.join(', ')
+      
+      const timesString = (data.availabilityTimes || []).length > 0
+        ? `during ${(data.availabilityTimes).join(', ')}`
         : 'any time';
-      const derivedAvailability = `${days}; available during ${times}`;
+        
+      const derivedAvailability = `${daysString}; ${timesString}`;
       
       const updatedFirestoreData = {
           name: data.name,
@@ -350,51 +373,60 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 <FormDescription>
                     Let others know when you are generally available to connect.
                 </FormDescription>
+                
                 <FormField
                   control={form.control}
                   name="availabilityDays"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                  render={() => (
+                     <FormItem>
                       <FormLabel className="text-sm">Available Days</FormLabel>
-                       <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value?.length && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value && field.value.length > 0 ? (
-                                `${field.value.length} days selected`
-                              ) : (
-                                <span>Pick dates</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="multiple"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {daysOfWeek.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="availabilityDays"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={item.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(item.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), item.id])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== item.id
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.label}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                  <FormField
                   control={form.control}
                   name="availabilityTimes"
                   render={() => (
                     <FormItem>
                       <FormLabel className="text-sm">Available Times</FormLabel>
-                      <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row gap-4">
                       {availabilityTimeSlots.map((item) => (
                         <FormField
                           key={item.id}
