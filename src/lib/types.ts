@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -21,13 +22,13 @@ export interface SwapRequest {
   message: string;
   createdAt: any; // Should be ISO string or Timestamp
   // Cache user details to reduce lookups
-  fromUserName?: string;
-  fromUserAvatar?: string;
-  toUserName?: string;
-  toUserAvatar?: string;
+  fromUserName: string;
+  fromUserAvatar: string;
+  toUserName: string;
+  toUserAvatar: string;
   // Track ratings
-  fromUserRated?: boolean;
-  toUserRated?: boolean;
+  fromUserRated: boolean;
+  toUserRated: boolean;
 }
 
 export interface Message {

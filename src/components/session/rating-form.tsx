@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, writeBatch, increment } from "firebase/firestore";
@@ -29,11 +29,13 @@ export function RatingForm({ swapRequest, otherUserId }: RatingFormProps) {
   
   const ratingFieldName = authUser?.uid === swapRequest.fromUserId ? 'fromUserRated' : 'toUserRated';
 
-  // Check if the current user has already rated
-  // @ts-ignore
-  if (swapRequest[ratingFieldName] && !alreadyRated) {
-    setAlreadyRated(true);
-  }
+  useEffect(() => {
+    // @ts-ignore
+    if (swapRequest && swapRequest[ratingFieldName]) {
+        setAlreadyRated(true);
+    }
+  }, [swapRequest, ratingFieldName]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

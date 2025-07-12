@@ -58,8 +58,8 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
     
     if (!authLoading && authUser) {
         fetchCurrentUser();
-    } else {
-        setLoadingUser(true);
+    } else if (!authLoading && !authUser) {
+        setLoadingUser(false);
     }
   }, [authUser, authLoading]);
 
@@ -79,16 +79,18 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
     try {
       await addDoc(collection(db, "swapRequests"), {
         fromUserId: authUser.uid,
+        fromUserName: currentUser.name,
+        fromUserAvatar: currentUser.avatarUrl,
         toUserId: targetUser.id,
+        toUserName: targetUser.name,
+        toUserAvatar: targetUser.avatarUrl,
         skillOffered,
         skillWanted,
         message,
         status: "pending",
         createdAt: serverTimestamp(),
-        fromUserName: currentUser.name,
-        fromUserAvatar: currentUser.avatarUrl,
-        toUserName: targetUser.name,
-        toUserAvatar: targetUser.avatarUrl,
+        fromUserRated: false,
+        toUserRated: false,
       });
 
       toast({
@@ -127,6 +129,10 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
         {loadingUser ? (
             <div className="flex items-center justify-center h-48">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : !currentUser ? (
+            <div className="text-center p-4">
+                <p>Please complete your profile before sending requests.</p>
             </div>
         ) : (
             <form onSubmit={handleSubmit}>
