@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header";
 import { SwapRequest } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy, or, Unsubscribe } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, or, and, Unsubscribe } from "firebase/firestore";
 import { Loader2, MessageSquare, CheckCircle } from "lucide-react";
 import { RequestCard } from "@/components/requests/request-card";
 
@@ -36,11 +36,13 @@ export default function SessionsPage() {
       
       const sessionsQuery = query(
         collection(db, "swapRequests"),
-        or(
-          where("toUserId", "==", authUser.uid),
-          where("fromUserId", "==", authUser.uid)
+        and(
+          or(
+            where("toUserId", "==", authUser.uid),
+            where("fromUserId", "==", authUser.uid)
+          ),
+          where("status", "in", ["accepted", "completed"])
         ),
-        where("status", "in", ["accepted", "completed"]),
         orderBy("createdAt", "desc")
       );
 
