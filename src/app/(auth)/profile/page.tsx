@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { User } from "@/lib/types";
 
@@ -27,15 +27,30 @@ export default function ProfilePage() {
       try {
         const userDocRef = doc(db, "users", authUser.uid);
         const userDocSnap = await getDoc(userDocRef);
+
         if (userDocSnap.exists()) {
           setUserProfile(userDocSnap.data() as User);
         } else {
-          // Handle case where user exists in Auth but not in Firestore
-          console.error("No user profile found in Firestore for UID:", authUser.uid);
-          setUserProfile(null);
+          // If no profile exists, create a default one
+          console.warn("No user profile found, creating a default one for UID:", authUser.uid);
+          const newUserProfile: User = {
+            id: authUser.uid,
+            name: authUser.displayName || "New User",
+            email: authUser.email || "",
+            avatarUrl: authUser.photoURL || `https://placehold.co/100x100.png`,
+            bio: 'Welcome to Skillshare! Please update your bio.',
+            skillsOffered: [],
+            skillsWanted: [],
+            availability: 'Not set',
+            rating: 0,
+            reviews: 0,
+          };
+          await setDoc(userDocRef, newUserProfile);
+          setUserProfile(newUserProfile);
         }
       } catch (error) {
-        console.error("Error fetching user profile:", error);
+        console.error("Error fetching or creating user profile:", error);
+        setUserProfile(null);
       } finally {
         setLoadingProfile(false);
       }
@@ -62,7 +77,7 @@ export default function ProfilePage() {
             <ProfileForm user={userProfile} />
           ) : (
             <p className="text-center text-muted-foreground">
-              Could not load your profile. Please try again later.
+              Could not load your profile. Please try refreshing the page.
             </p>
           )}
         </div>
