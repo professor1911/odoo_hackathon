@@ -3,12 +3,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, SwapRequest } from "@/lib/types";
-import { ArrowRight, Check, X, Loader2 } from "lucide-react";
+import { ArrowRight, Check, X, Loader2, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -113,7 +114,9 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
             <p className="font-semibold">{request.skillWanted}</p>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground p-4 border rounded-lg bg-background">"{request.message}"</p>
+        {request.message && (
+          <p className="text-sm text-muted-foreground p-4 border rounded-lg bg-background">"{request.message}"</p>
+        )}
       </CardContent>
       {type === 'incoming' && request.status === 'pending' && (
         <CardFooter className="flex justify-end gap-2">
@@ -125,6 +128,25 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
                 {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                 Accept
             </Button>
+        </CardFooter>
+      )}
+       {request.status === 'accepted' && (
+        <CardFooter className="flex justify-end gap-2">
+            <Link href={`/session/${request.id}`} passHref>
+                <Button>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Go to Session
+                </Button>
+            </Link>
+        </CardFooter>
+      )}
+      {request.status === 'completed' && (
+        <CardFooter className="flex justify-end gap-2">
+            <Link href={`/session/${request.id}`} passHref>
+                <Button variant="outline">
+                    View Session Details
+                </Button>
+            </Link>
         </CardFooter>
       )}
     </Card>

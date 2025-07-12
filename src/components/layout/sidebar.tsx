@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Home, User, Bell, Wand2, LogOut, Handshake } from 'lucide-react'
+import { Home, User, Bell, Wand2, LogOut, Handshake, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
   { href: '/profile', icon: User, label: 'Profile' },
   { href: '/requests', icon: Bell, label: 'Requests' },
+  { href: '/sessions', icon: MessageSquare, label: 'Sessions'},
   { href: '/recommendations', icon: Wand2, label: 'For You' },
 ]
 
@@ -58,7 +59,7 @@ export default function AppSidebar() {
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <Button
-              variant={pathname === item.href ? 'secondary' : 'ghost'}
+              variant={pathname.startsWith(item.href) && item.href !== '/' ? 'secondary' : 'ghost'}
               className="w-full justify-start gap-3"
             >
               <item.icon className="h-5 w-5" />
