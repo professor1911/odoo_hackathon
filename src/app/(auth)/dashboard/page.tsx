@@ -7,14 +7,22 @@ import { otherUsers } from "@/lib/data";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
-const USERS_PER_PAGE = 8;
 const SKILL_FILTERS = ["React", "Python", "Cooking", "Guitar", "Marketing", "Photography"];
 
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
 
   const filteredUsers = useMemo(() => {
     return otherUsers
@@ -29,10 +37,10 @@ export default function DashboardPage() {
       });
   }, [searchQuery, activeFilter]);
 
-  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * USERS_PER_PAGE,
-    currentPage * USERS_PER_PAGE
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
   );
 
   const handleFilterClick = (skill: string) => {
@@ -42,6 +50,11 @@ export default function DashboardPage() {
       setActiveFilter(skill);
     }
     setCurrentPage(1); // Reset to first page
+  };
+
+  const handleUsersPerPageChange = (value: string) => {
+    setUsersPerPage(Number(value));
+    setCurrentPage(1);
   };
 
   return (
@@ -92,26 +105,44 @@ export default function DashboardPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center items-center mt-8 space-x-4">
-              <Button 
-                variant="outline"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button 
-                variant="outline"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+            <div className="flex justify-between items-center mt-8 space-x-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="users-per-page" className="text-sm text-muted-foreground whitespace-nowrap">Users per page:</Label>
+                <Select
+                  value={String(usersPerPage)}
+                  onValueChange={handleUsersPerPageChange}
+                >
+                  <SelectTrigger id="users-per-page" className="w-20">
+                    <SelectValue placeholder={usersPerPage} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center justify-center space-x-4">
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button 
+                  variant="outline"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
             </div>
           )}
         </div>
