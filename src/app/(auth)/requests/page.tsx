@@ -18,18 +18,20 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If auth is still loading, do nothing and show the loading spinner.
     if (authLoading) {
       setLoading(true);
       return;
     }
 
+    // If there is no authenticated user, clear the requests and stop loading.
     if (!authUser) {
-      setLoading(false);
       setIncomingRequests([]);
       setOutgoingRequests([]);
+      setLoading(false);
       return;
     }
-
+    
     // This effect handles setting up the Firestore listeners.
     // It will only run when authUser.uid is available and will clean up on unmount.
     let unsubscribeIncoming: Unsubscribe | undefined;
@@ -37,7 +39,7 @@ export default function RequestsPage() {
 
     try {
       setLoading(true);
-      
+
       // Listener for incoming requests
       const incomingQuery = query(
         collection(db, "swapRequests"),
@@ -47,7 +49,7 @@ export default function RequestsPage() {
       unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
         const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
         setIncomingRequests(requests);
-        setLoading(false); // Set loading to false once data is received
+        setLoading(false); // Set loading to false once initial data is received
       }, (error) => {
         console.error("Error fetching incoming requests: ", error);
         setLoading(false);
@@ -62,18 +64,20 @@ export default function RequestsPage() {
       unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
         const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
         setOutgoingRequests(requests);
-        // Do not set loading to false here again, to avoid flickering
+        // Do not set loading to false here again, to avoid flickering if one listener returns after the other.
+        // The loading state is primarily for the initial page load.
       }, (error) => {
         console.error("Error fetching outgoing requests: ", error);
         setLoading(false);
       });
+
     } catch (error) {
         console.error("Failed to set up listeners:", error);
         setLoading(false);
     }
-    
+
     // Cleanup function to unsubscribe from listeners when the component unmounts
-    // or when the authUser changes.
+    // or when the authUser changes. This is crucial to prevent memory leaks and errors.
     return () => {
       if (unsubscribeIncoming) {
         unsubscribeIncoming();
@@ -100,7 +104,7 @@ export default function RequestsPage() {
           <TabsContent value="incoming">
             <div className="space-y-4 max-w-3xl mx-auto pt-4">
               {loading ? (
-                 <div className="flex justify-center items-center py-10">
+                 <div className="flex justify-center items-center py-20">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                  </div>
               ) : incomingRequests.length > 0 ? (
@@ -113,8 +117,8 @@ export default function RequestsPage() {
 
           <TabsContent value="outgoing">
              <div className="space-y-4 max-w-3xl mx-auto pt-4">
-                {loading && incomingRequests.length === 0 ? ( // Only show loader if incoming is also loading
-                    <div className="flex justify-center items-center py-10">
+                {loading && incomingRequests.length === 0 ? ( // Only show loader if the page is still loading initially
+                    <div className="flex justify-center items-center py-20">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                 ) : outgoingRequests.length > 0 ? (
