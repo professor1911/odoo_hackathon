@@ -250,22 +250,27 @@ export function ProfileForm({ user }: ProfileFormProps) {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={avatarPreview || undefined} alt={user.name} />
-                <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
-              </Avatar>
+                <div className="relative">
+                    <Input 
+                        id="avatar-upload" 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleAvatarChange} 
+                        className="hidden" 
+                    />
+                    <label htmlFor="avatar-upload" className="cursor-pointer group">
+                        <Avatar className="h-24 w-24 transition-opacity group-hover:opacity-75">
+                            <AvatarImage src={avatarPreview || undefined} alt={user.name} />
+                            <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Upload className="h-8 w-8 text-white" />
+                        </div>
+                    </label>
+                </div>
               <div className="flex-1 space-y-2">
-                <FormLabel htmlFor="avatar-upload">Profile Picture</FormLabel>
-                <Input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-                <label htmlFor="avatar-upload" className="inline-block">
-                  <Button type="button" asChild>
-                    <span className="cursor-pointer">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Image
-                    </span>
-                  </Button>
-                </label>
-                <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB.</p>
+                <FormLabel>Profile Picture</FormLabel>
+                <p className="text-sm text-muted-foreground">Click the image to upload a new one. <br /> PNG, JPG, GIF up to 5MB.</p>
               </div>
             </div>
 
