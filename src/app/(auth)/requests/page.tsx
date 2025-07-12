@@ -15,19 +15,17 @@ export default function RequestsPage() {
   const { user: authUser, loading: authLoading } = useAuth();
   const [incomingRequests, setIncomingRequests] = useState<SwapRequest[]>([]);
   const [outgoingRequests, setOutgoingRequests] = useState<SwapRequest[]>([]);
-  const [loadingIncoming, setLoadingIncoming] = useState(true);
-  const [loadingOutgoing, setLoadingOutgoing] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (authLoading || !authUser) {
       // If auth is loading or there's no user, we are not ready to fetch.
-      // Set loading states to true if we are waiting for auth.
-      setLoadingIncoming(!authUser);
-      setLoadingOutgoing(!authUser);
+      setLoading(true);
       return;
     }
 
-    setLoadingIncoming(true);
+    setLoading(true);
+
     // Listener for incoming requests
     const incomingQuery = query(
       collection(db, "swapRequests"),
@@ -37,13 +35,12 @@ export default function RequestsPage() {
     const unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
       const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
       setIncomingRequests(requests);
-      setLoadingIncoming(false);
+      setLoading(false);
     }, (error) => {
       console.error("Error fetching incoming requests: ", error);
-      setLoadingIncoming(false);
+      setLoading(false);
     });
 
-    setLoadingOutgoing(true);
     // Listener for outgoing requests
     const outgoingQuery = query(
       collection(db, "swapRequests"),
@@ -53,10 +50,10 @@ export default function RequestsPage() {
     const unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
       const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
       setOutgoingRequests(requests);
-      setLoadingOutgoing(false);
+      setLoading(false); // Can be set here too
     }, (error) => {
       console.error("Error fetching outgoing requests: ", error);
-      setLoadingOutgoing(false);
+      setLoading(false);
     });
 
     // Cleanup function to unsubscribe from listeners when the component unmounts
@@ -66,8 +63,6 @@ export default function RequestsPage() {
     };
 
   }, [authUser, authLoading]);
-
-  const isLoading = loadingIncoming || loadingOutgoing;
 
   return (
     <div className="flex flex-col h-full">
@@ -84,7 +79,7 @@ export default function RequestsPage() {
           
           <TabsContent value="incoming">
             <div className="space-y-4 max-w-3xl mx-auto pt-4">
-              {isLoading ? (
+              {loading ? (
                  <div className="flex justify-center items-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                  </div>
@@ -98,7 +93,7 @@ export default function RequestsPage() {
 
           <TabsContent value="outgoing">
              <div className="space-y-4 max-w-3xl mx-auto pt-4">
-                {isLoading ? (
+                {loading ? (
                     <div className="flex justify-center items-center py-10">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
