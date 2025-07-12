@@ -18,15 +18,15 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This effect should only run once to set up the listeners.
-    // The auth check inside ensures we don't query until we have a user.
-    if (!authUser) {
-      setLoading(false); // Not logged in, so not loading.
+    if (authLoading || !authUser) {
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
     const requestsRef = collection(db, "swapRequests");
-    
+    const unsubscribes: Unsubscribe[] = [];
+
     // Listener for incoming requests
     const incomingQuery = query(
       requestsRef,
@@ -36,11 +36,12 @@ export default function RequestsPage() {
     const unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
       const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
       setIncomingRequests(requests);
-      setLoading(false); // Stop loading once we have data
+      setLoading(false);
     }, (error) => {
       console.error("Error fetching incoming requests: ", error);
       setLoading(false);
     });
+    unsubscribes.push(unsubscribeIncoming);
 
     // Listener for outgoing requests
     const outgoingQuery = query(
@@ -51,19 +52,18 @@ export default function RequestsPage() {
     const unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
       const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
       setOutgoingRequests(requests);
-      setLoading(false); // Stop loading once we have data
+      setLoading(false);
     }, (error) => {
       console.error("Error fetching outgoing requests: ", error);
       setLoading(false);
     });
+    unsubscribes.push(unsubscribeOutgoing);
     
-    // Cleanup function: This is crucial for preventing memory leaks.
-    // It will be called when the component unmounts.
+    // Cleanup function
     return () => {
-      unsubscribeIncoming();
-      unsubscribeOutgoing();
+      unsubscribes.forEach(unsub => unsub());
     };
-  }, [authUser]); // Depend only on authUser to re-run if the user logs in/out
+  }, [authUser, authLoading]);
 
   const isLoading = authLoading || loading;
 
@@ -73,7 +73,7 @@ export default function RequestsPage() {
         title="Swap Requests"
         description="Manage your incoming and outgoing skill swap proposals."
       />
-      <div className="p-6 flex-1 overflow-auto">
+      <div className="p-4 md:p-6 flex-1 overflow-auto">
         {isLoading ? (
             <div className="flex justify-center items-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

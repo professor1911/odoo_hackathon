@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -13,6 +14,7 @@ interface UserCardProps {
 }
 
 const getInitials = (name: string) => {
+  if (!name) return "";
   const names = name.split(' ');
   if (names.length > 1) {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -22,6 +24,8 @@ const getInitials = (name: string) => {
 
 export function UserCard({ user, layout = "vertical" }: UserCardProps) {
   const initials = getInitials(user.name);
+  const rating = user.rating || 0;
+  const reviews = user.reviews || 0;
 
   if (layout === "horizontal") {
     return (
@@ -39,18 +43,18 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
                 <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>{user.rating} ({user.reviews} reviews)</span>
+                  <span>{rating.toFixed(1)} ({reviews} reviews)</span>
                 </div>
               </div>
                <Link href={`/users/${user.id}`} className="hidden sm:block">
-                <Button className="font-semibold">
-                  View Profile <ArrowRight className="ml-2 h-4 w-4" />
+                <Button className="font-semibold" size="sm">
+                  View <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
             
-             <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="text-sm font-semibold w-14 text-muted-foreground">Offers:</span>
+             <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-1 mt-2 text-sm">
+                <span className="font-semibold w-14 text-muted-foreground shrink-0">Offers:</span>
                 <div className="flex flex-wrap gap-1">
                   {user.skillsOffered.slice(0, 4).map((skill) => (
                       <SkillBadge key={skill} skill={skill} />
@@ -58,8 +62,8 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
                   {user.skillsOffered.length > 4 && <SkillBadge skill={`+${user.skillsOffered.length - 4}`} />}
                 </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-sm font-semibold w-14 text-muted-foreground">Wants:</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-1 mt-1 text-sm">
+                <span className="font-semibold w-14 text-muted-foreground shrink-0">Wants:</span>
                  <div className="flex flex-wrap gap-1">
                   {user.skillsWanted.slice(0, 4).map((skill) => (
                       <SkillBadge key={skill} skill={skill} variant="outline" />
@@ -89,7 +93,7 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
           <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span>{user.rating} ({user.reviews} reviews)</span>
+            <span>{rating.toFixed(1)} ({reviews} reviews)</span>
           </div>
         </div>
       </CardHeader>

@@ -97,7 +97,7 @@ export default function DashboardPage() {
         title="Discover Skills" 
         description="Find talented people to learn from and share with." 
       />
-      <div className="p-6 flex-1 overflow-auto">
+      <div className="p-4 md:p-6 flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <div className="mb-4">
             <div className="relative">
@@ -115,7 +115,7 @@ export default function DashboardPage() {
           </div>
           <div className="mb-6">
             <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-medium self-center">Popular filters:</span>
+              <span className="text-sm font-medium self-center">Popular:</span>
               {SKILL_FILTERS.map(skill => (
                 <Button 
                   key={skill}
@@ -146,9 +146,9 @@ export default function DashboardPage() {
           )}
 
           {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-8 space-x-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
               <div className="flex items-center gap-2">
-                <Label htmlFor="users-per-page" className="text-sm text-muted-foreground whitespace-nowrap">Users per page:</Label>
+                <Label htmlFor="users-per-page" className="text-sm text-muted-foreground whitespace-nowrap">Per page:</Label>
                 <Select
                   value={String(usersPerPage)}
                   onValueChange={handleUsersPerPageChange}
@@ -163,25 +163,25 @@ export default function DashboardPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center justify-center space-x-4">
+              <div className="flex items-center justify-center space-x-2">
                 <Button 
                   variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Previous
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted-foreground">
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button 
                   variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>

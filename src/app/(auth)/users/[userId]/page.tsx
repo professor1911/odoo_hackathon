@@ -76,25 +76,25 @@ export default function UserProfilePage() {
       <Header title="User Profile">
         <RequestSwapDialog targetUser={user} />
       </Header>
-      <div className="p-6 flex-1 overflow-auto bg-background">
+      <div className="p-4 md:p-6 flex-1 overflow-auto bg-background">
         <div className="max-w-4xl mx-auto">
             <Card>
                 <CardHeader className="bg-muted/30">
                     <div className="flex flex-col md:flex-row items-start gap-6">
-                        <Avatar className="h-32 w-32 border-4 border-background shadow-md">
+                        <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-background shadow-md">
                             <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
                             <AvatarFallback className="text-4xl">{initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
-                            <h2 className="text-3xl font-bold font-headline">{user.name}</h2>
-                            <div className="flex items-center gap-4 mt-2 text-muted-foreground flex-wrap">
+                            <h2 className="text-2xl md:text-3xl font-bold font-headline">{user.name}</h2>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-muted-foreground flex-wrap">
                                 <div className="flex items-center gap-1">
                                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                    <span>{user.rating} ({user.reviews} reviews)</span>
+                                    <span>{user.rating.toFixed(1)} ({user.reviews} reviews)</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <Mail className="h-4 w-4" />
-                                    <span>{user.email}</span>
+                                    <span className="truncate">{user.email}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4" />
@@ -109,13 +109,19 @@ export default function UserProfilePage() {
                     <div className="space-y-4">
                         <h3 className="font-headline text-xl font-semibold flex items-center gap-2 text-green-600"><Sparkles className="h-5 w-5" />Skills Offered</h3>
                         <div className="flex flex-wrap gap-2">
-                            {user.skillsOffered.map(skill => <SkillBadge key={skill} skill={skill} className="text-base py-1 px-3" />)}
+                            {user.skillsOffered.length > 0 
+                                ? user.skillsOffered.map(skill => <SkillBadge key={skill} skill={skill} className="text-base py-1 px-3" />)
+                                : <p className="text-muted-foreground text-sm">No skills offered yet.</p>
+                            }
                         </div>
                     </div>
                      <div className="space-y-4">
                         <h3 className="font-headline text-xl font-semibold flex items-center gap-2 text-blue-600"><Heart className="h-5 w-5" />Skills Wanted</h3>
                         <div className="flex flex-wrap gap-2">
-                             {user.skillsWanted.map(skill => <SkillBadge key={skill} skill={skill} variant="outline" className="text-base py-1 px-3 border-blue-300" />)}
+                             {user.skillsWanted.length > 0
+                                ? user.skillsWanted.map(skill => <SkillBadge key={skill} skill={skill} variant="outline" className="text-base py-1 px-3 border-blue-300" />)
+                                : <p className="text-muted-foreground text-sm">No skills wanted yet.</p>
+                             }
                         </div>
                     </div>
                 </CardContent>

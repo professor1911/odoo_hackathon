@@ -40,19 +40,19 @@ import { auth, db, storage } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 
 const availabilityTimeSlots = [
-  { id: "mornings", label: "Mornings (9am - 12pm)" },
-  { id: "afternoons", label: "Afternoons (12pm - 5pm)" },
-  { id: "evenings", label: "Evenings (5pm - 9pm)" },
+  { id: "mornings", label: "Mornings" },
+  { id: "afternoons", label: "Afternoons" },
+  { id: "evenings", label: "Evenings" },
 ] as const;
 
 const daysOfWeek = [
-    { id: 'sunday', label: 'Sunday' },
     { id: 'monday', label: 'Monday' },
     { id: 'tuesday', label: 'Tuesday' },
     { id: 'wednesday', label: 'Wednesday' },
     { id: 'thursday', label: 'Thursday' },
     { id: 'friday', label: 'Friday' },
     { id: 'saturday', label: 'Saturday' },
+    { id: 'sunday', label: 'Sunday' },
 ] as const;
 
 
@@ -150,7 +150,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   // Parse availability string into form values
   const parseAvailability = (availabilityString: string) => {
     const parts = availabilityString.split(';').map(p => p.trim());
-    const daysPart = parts.find(p => p.toLowerCase().includes('days')) || '';
+    const daysPart = parts.find(p => p.toLowerCase().includes('on')) || '';
     const timesPart = parts.find(p => p.toLowerCase().includes('during')) || '';
 
     const selectedDays = daysOfWeek
@@ -278,7 +278,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="relative">
                     <Input 
                         id="avatar-upload" 
@@ -299,7 +299,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </div>
               <div className="flex-1 space-y-2">
                 <FormLabel>Profile Picture</FormLabel>
-                <p className="text-sm text-muted-foreground">Click the image to upload a new one. <br /> PNG, JPG, GIF up to 5MB.</p>
+                <p className="text-sm text-muted-foreground">Click the image to upload a new one. <br className="hidden sm:inline" /> PNG, JPG, GIF up to 5MB.</p>
               </div>
             </div>
 
@@ -379,8 +379,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   name="availabilityDays"
                   render={() => (
                      <FormItem>
-                      <FormLabel className="text-sm">Available Days</FormLabel>
-                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <FormLabel className="text-sm font-medium">Available Days</FormLabel>
+                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                       {daysOfWeek.map((item) => (
                         <FormField
                           key={item.id}
@@ -425,7 +425,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                   name="availabilityTimes"
                   render={() => (
                     <FormItem>
-                      <FormLabel className="text-sm">Available Times</FormLabel>
+                      <FormLabel className="text-sm font-medium">Available Times</FormLabel>
                       <div className="flex flex-col sm:flex-row gap-4">
                       {availabilityTimeSlots.map((item) => (
                         <FormField

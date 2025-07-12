@@ -2,15 +2,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Home, User, Bell, Wand2, LogOut, Handshake, MessageSquare } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { currentUser } from '@/lib/data' // This will be replaced with real user data
 import { useAuth } from '@/context/auth-context'
 import { auth } from '@/lib/firebase'
 import { signOut } from 'firebase/auth'
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar'
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -43,49 +42,57 @@ export default function AppSidebar() {
     }
   }
 
-  const name = user?.displayName || currentUser.name;
-  const email = user?.email || currentUser.email;
-  const avatarUrl = user?.photoURL || currentUser.avatarUrl;
+  const name = user?.displayName || 'User';
+  const email = user?.email || '';
+  const avatarUrl = user?.photoURL || `https://storage.googleapis.com/project-rsc-bucket/vignesh_testing/default_avatar.png`;
   const initials = getInitials(name);
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-card text-card-foreground">
-      <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold">
-          <Handshake className="h-6 w-6 text-primary" />
-          <span className="text-lg">Skillshare</span>
-        </Link>
-      </div>
-      <nav className="flex-1 space-y-2 p-4">
-        {navItems.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <Button
-              variant={pathname.startsWith(item.href) && item.href !== '/' ? 'secondary' : 'ghost'}
-              className="w-full justify-start gap-3"
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Button>
+     <Sidebar collapsible="icon" className="group-data-[variant=inset]:border-r-0">
+        <SidebarHeader className="border-b">
+          <Link href="/dashboard" className="flex items-center gap-2 font-headline font-semibold text-lg p-2">
+            <Handshake className="h-6 w-6 text-primary" />
+            <span className="group-data-[collapsible=icon]:hidden">Skillshare</span>
           </Link>
-        ))}
-      </nav>
-      <div className="mt-auto border-t p-4">
-         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={avatarUrl} alt={name} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <p className="text-sm font-medium leading-none">{name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{email}</p>
-                </div>
+        </SidebarHeader>
+
+        <SidebarContent className="p-2">
+          <SidebarMenu>
+            {navItems.map((item) => (
+              <SidebarMenuItem key={item.href}>
+                <Link href={item.href} passHref legacyBehavior>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(item.href)}
+                        tooltip={{ children: item.label }}
+                        className="w-full justify-start"
+                    >
+                      <a>
+                        <item.icon className="h-5 w-5" />
+                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                      </a>
+                    </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+
+        <SidebarFooter>
+          <div className="flex items-center gap-3 p-2">
+             <Avatar className="h-10 w-10">
+                <AvatarImage src={avatarUrl} alt={name} />
+                <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 overflow-hidden group-data-[collapsible=icon]:hidden">
+                <p className="text-sm font-medium leading-none truncate">{name}</p>
+                <p className="text-xs leading-none text-muted-foreground truncate">{email}</p>
             </div>
-              <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout}>
+             <Button variant="ghost" size="icon" aria-label="Log out" onClick={handleLogout} className="group-data-[collapsible=icon]:hidden">
                   <LogOut className="h-5 w-5" />
               </Button>
-         </div>
-      </div>
-    </aside>
+          </div>
+        </SidebarFooter>
+    </Sidebar>
   )
 }

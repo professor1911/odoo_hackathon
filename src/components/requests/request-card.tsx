@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -86,32 +85,34 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
+        <div className="flex justify-between items-start gap-2">
+            <div className="flex items-center gap-3 overflow-hidden">
             <Avatar>
                 <AvatarImage src={otherUserAvatar} alt={otherUserName} />
                 <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div>
-                <CardTitle className="text-base font-headline">
+            <div className="overflow-hidden">
+                <CardTitle className="text-base font-headline truncate">
                     {type === 'incoming' ? `${otherUserName} sent you a request` : `You sent a request to ${otherUserName}`}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">{formattedDate || '...'}</p>
             </div>
             </div>
-            {getStatusBadge(request.status)}
+            <div className="flex-shrink-0">
+                {getStatusBadge(request.status)}
+            </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-around text-center bg-muted/50 p-4 rounded-lg">
-          <div>
+        <div className="flex items-center justify-around text-center bg-muted/50 p-4 rounded-lg flex-wrap gap-2">
+          <div className="flex-1 min-w-[100px]">
             <p className="text-xs text-muted-foreground">{type === 'incoming' ? 'They Offer' : 'You Offer'}</p>
-            <p className="font-semibold">{request.skillOffered}</p>
+            <p className="font-semibold truncate">{request.skillOffered}</p>
           </div>
-          <ArrowRight className="h-5 w-5 text-muted-foreground" />
-          <div>
+          <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1 min-w-[100px]">
             <p className="text-xs text-muted-foreground">{type === 'incoming' ? 'They Want' : 'You Want'}</p>
-            <p className="font-semibold">{request.skillWanted}</p>
+            <p className="font-semibold truncate">{request.skillWanted}</p>
           </div>
         </div>
         {request.message && (
@@ -120,11 +121,11 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
       </CardContent>
       {type === 'incoming' && request.status === 'pending' && (
         <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleRequestUpdate('rejected')} disabled={actionLoading}>
+            <Button variant="outline" onClick={() => handleRequestUpdate('rejected')} disabled={actionLoading} size="sm">
                 {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
                 Reject
             </Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleRequestUpdate('accepted')} disabled={actionLoading}>
+            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleRequestUpdate('accepted')} disabled={actionLoading} size="sm">
                 {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                 Accept
             </Button>

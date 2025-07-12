@@ -77,7 +77,7 @@ export default function SwapSessionPage() {
     return (
         <div className="flex flex-col h-full">
             <Header title="Access Denied" />
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center p-4 text-center">
                 <p>You are not a participant in this swap session.</p>
             </div>
       </div>
@@ -96,10 +96,10 @@ export default function SwapSessionPage() {
         description={`Trading "${swapRequest.skillOffered}" for "${swapRequest.skillWanted}"`}
       >
         {!isCompleted && (
-           <Button onClick={handleCompleteSwap}>Mark as Complete</Button>
+           <Button onClick={handleCompleteSwap} size="sm">Mark as Complete</Button>
         )}
       </Header>
-      <div className="flex-1 p-6 overflow-hidden">
+      <div className="flex-1 p-2 sm:p-4 md:p-6 overflow-hidden">
         <div className="h-full max-w-4xl mx-auto flex flex-col">
             {isCompleted ? (
                 <RatingForm swapRequest={swapRequest} otherUserId={otherUserId} />

@@ -37,7 +37,7 @@ export default function ProfilePage() {
             id: authUser.uid,
             name: authUser.displayName || "New User",
             email: authUser.email || "",
-            avatarUrl: authUser.photoURL || `https://storage.googleapis.com/project-rsc-bucket/vignesh_testing/default_avatar.png`,
+            avatarUrl: `https://storage.googleapis.com/project-rsc-bucket/vignesh_testing/default_avatar.png`,
             bio: 'Welcome to Skillshare! Please update your bio.',
             skillsOffered: [],
             skillsWanted: [],
@@ -67,7 +67,7 @@ export default function ProfilePage() {
         title="Manage Your Profile"
         description="Keep your skills and availability up to date."
       />
-      <div className="p-6 flex-1 overflow-auto">
+      <div className="p-4 md:p-6 flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto">
           {loadingProfile || authLoading ? (
             <div className="flex justify-center items-center py-20">
