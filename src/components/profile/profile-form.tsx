@@ -6,8 +6,10 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { CalendarIcon, X, Loader2 } from "lucide-react";
+import { CalendarIcon, X, Loader2, Upload } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { updateProfile } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +39,8 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { auth, db, storage } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 
 const availabilityTimeSlots = [
   { id: "mornings", label: "Mornings (9am - 12pm)" },
@@ -68,6 +72,7 @@ interface ProfileFormProps {
 }
 
 const getInitials = (name: string) => {
+  if (!name) return '??';
   const names = name.split(' ');
   if (names.length > 1) {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -127,12 +132,15 @@ const SkillInput = ({
 
 
 export function ProfileForm({ user }: ProfileFormProps) {
+  const { user: authUser } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl);
+
   const initials = getInitials(user.name);
 
   // A simple way to parse the string availability back into dates and times
-  // This is a mock implementation. A real app would store this structured data.
   const initialAvailability = {
     days: user.availability.includes("Weekday") ? [new Date()] : [], // Placeholder
     times: availabilityTimeSlots.filter(slot => user.availability.toLowerCase().includes(slot.id.slice(0, -1))).map(s => s.id)
@@ -152,30 +160,80 @@ export function ProfileForm({ user }: ProfileFormProps) {
     mode: "onChange",
   });
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+
   async function onSubmit(data: ProfileFormValues) {
+    if (!authUser) {
+      toast({
+        variant: "destructive",
+        title: "Not Authenticated",
+        description: "You must be logged in to update your profile.",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // Derive a readable string from the structured availability data
-    const days = data.availabilityDays && data.availabilityDays.length > 0
-      ? `${data.availabilityDays.length} day(s) selected`
-      : 'Flexible days';
-    const times = data.availabilityTimes && data.availabilityTimes.length > 0
-      ? data.availabilityTimes.join(', ')
-      : 'any time';
-    const derivedAvailability = `${days}; available during ${times}`;
-    
-    const submissionData = { ...data, availability: derivedAvailability };
-    
-    // Simulate API call to save data
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log(submissionData);
-    toast({
-      title: "Profile Updated",
-      description: "Your changes have been saved successfully.",
-    });
-    setIsLoading(false);
-    router.refresh();
+    try {
+      let newAvatarUrl = user.avatarUrl;
+
+      // Upload new avatar if one was selected
+      if (avatarFile) {
+        const storageRef = ref(storage, `profile-pictures/${authUser.uid}`);
+        const snapshot = await uploadBytes(storageRef, avatarFile);
+        newAvatarUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      // Derive a readable string from the structured availability data
+      const days = data.availabilityDays && data.availabilityDays.length > 0
+        ? `${data.availabilityDays.length} day(s) selected`
+        : 'Flexible days';
+      const times = data.availabilityTimes && data.availabilityTimes.length > 0
+        ? data.availabilityTimes.join(', ')
+        : 'any time';
+      const derivedAvailability = `${days}; available during ${times}`;
+      
+      const updatedUserData = {
+          name: data.name,
+          bio: data.bio,
+          skillsOffered: data.skillsOffered,
+          skillsWanted: data.skillsWanted,
+          availability: derivedAvailability,
+          avatarUrl: newAvatarUrl
+      };
+
+      // Update Firestore
+      const userDocRef = doc(db, "users", authUser.uid);
+      await updateDoc(userDocRef, updatedUserData);
+
+      // Update Firebase Auth profile
+      await updateProfile(authUser, {
+          displayName: data.name,
+          photoURL: newAvatarUrl,
+      });
+
+      toast({
+        title: "Profile Updated",
+        description: "Your changes have been saved successfully.",
+      });
+      router.refresh();
+    } catch(error: any) {
+        console.error("Profile update error:", error);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
@@ -183,22 +241,34 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <CardHeader>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <CardTitle className="font-headline">
-                  Edit Profile
-                </CardTitle>
-                <CardDescription>
-                  Make changes to your profile here. Click save when you're done.
-                </CardDescription>
-              </div>
-            </div>
+              <CardTitle className="font-headline">
+                Edit Profile
+              </CardTitle>
+              <CardDescription>
+                Make changes to your profile here. Click save when you're done.
+              </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={avatarPreview || undefined} alt={user.name} />
+                <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <FormLabel htmlFor="avatar-upload">Profile Picture</FormLabel>
+                <Input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                <label htmlFor="avatar-upload" className="inline-block">
+                  <Button type="button" asChild>
+                    <span className="cursor-pointer">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Image
+                    </span>
+                  </Button>
+                </label>
+                <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB.</p>
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="name"
