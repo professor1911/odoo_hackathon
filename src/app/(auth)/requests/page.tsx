@@ -20,6 +20,8 @@ export default function RequestsPage() {
 
   useEffect(() => {
     if (authLoading || !authUser) {
+      // If auth is loading or there's no user, we're not ready to fetch.
+      // We also clear out any existing data.
       setIncomingRequests([]);
       setOutgoingRequests([]);
       setLoadingIncoming(true);
@@ -28,49 +30,42 @@ export default function RequestsPage() {
     }
 
     const requestsRef = collection(db, "swapRequests");
-    let unsubscribeIncoming: Unsubscribe | undefined;
-    let unsubscribeOutgoing: Unsubscribe | undefined;
+    const unsubscribers: Unsubscribe[] = [];
 
-    try {
-      // Listener for incoming requests
-      const incomingQuery = query(
-        requestsRef,
-        where("toUserId", "==", authUser.uid),
-        orderBy("createdAt", "desc")
-      );
-      unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
-        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
-        setIncomingRequests(requests);
-        setLoadingIncoming(false);
-      }, (error) => {
-        console.error("Error fetching incoming requests: ", error);
-        setLoadingIncoming(false);
-      });
-
-      // Listener for outgoing requests
-      const outgoingQuery = query(
-        requestsRef,
-        where("fromUserId", "==", authUser.uid),
-        orderBy("createdAt", "desc")
-      );
-      unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
-        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
-        setOutgoingRequests(requests);
-        setLoadingOutgoing(false);
-      }, (error) => {
-        console.error("Error fetching outgoing requests: ", error);
-        setLoadingOutgoing(false);
-      });
-    } catch (error) {
-      console.error("Error setting up listeners:", error);
+    // Listener for incoming requests
+    const incomingQuery = query(
+      requestsRef,
+      where("toUserId", "==", authUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    unsubscribers.push(onSnapshot(incomingQuery, (querySnapshot) => {
+      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+      setIncomingRequests(requests);
       setLoadingIncoming(false);
+    }, (error) => {
+      console.error("Error fetching incoming requests: ", error);
+      setLoadingIncoming(false);
+    }));
+
+    // Listener for outgoing requests
+    const outgoingQuery = query(
+      requestsRef,
+      where("fromUserId", "==", authUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    unsubscribers.push(onSnapshot(outgoingQuery, (querySnapshot) => {
+      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+      setOutgoingRequests(requests);
       setLoadingOutgoing(false);
-    }
+    }, (error) => {
+      console.error("Error fetching outgoing requests: ", error);
+      setLoadingOutgoing(false);
+    }));
     
-    // Cleanup function
+    // Cleanup function: This is crucial for preventing memory leaks and Firestore errors.
+    // It will be called when the component unmounts or when authUser/authLoading changes.
     return () => {
-      if (unsubscribeIncoming) unsubscribeIncoming();
-      if (unsubscribeOutgoing) unsubscribeOutgoing();
+      unsubscribers.forEach(unsub => unsub());
     };
   }, [authUser, authLoading]);
 
