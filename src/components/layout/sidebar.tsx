@@ -15,8 +15,17 @@ const navItems = [
   { href: '/recommendations', icon: Wand2, label: 'For You' },
 ]
 
+const getInitials = (name: string) => {
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 export default function AppSidebar() {
   const pathname = usePathname()
+  const initials = getInitials(currentUser.name);
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card text-card-foreground">
@@ -44,7 +53,7 @@ export default function AppSidebar() {
             <div className="flex items-center gap-3">
                  <Avatar className="h-10 w-10">
                     <AvatarImage src={currentUser.avatarUrl} alt={currentUser.name} />
-                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div>
                     <p className="text-sm font-medium leading-none">{currentUser.name}</p>

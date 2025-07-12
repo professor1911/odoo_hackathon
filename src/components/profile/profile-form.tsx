@@ -67,6 +67,14 @@ interface ProfileFormProps {
   user: User;
 }
 
+const getInitials = (name: string) => {
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 const SkillInput = ({
   value,
   onChange,
@@ -121,6 +129,7 @@ const SkillInput = ({
 export function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const initials = getInitials(user.name);
 
   // A simple way to parse the string availability back into dates and times
   // This is a mock implementation. A real app would store this structured data.
@@ -177,7 +186,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <CardTitle className="font-headline">

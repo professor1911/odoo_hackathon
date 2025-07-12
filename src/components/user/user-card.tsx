@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowRight } from "lucide-react";
@@ -12,7 +12,17 @@ interface UserCardProps {
   layout?: "vertical" | "horizontal";
 }
 
+const getInitials = (name: string) => {
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 export function UserCard({ user, layout = "vertical" }: UserCardProps) {
+  const initials = getInitials(user.name);
+
   if (layout === "horizontal") {
     return (
        <Card className="transition-shadow hover:shadow-md">
@@ -20,7 +30,7 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
           <div className="flex items-center gap-4 flex-shrink-0">
              <Avatar className="h-16 w-16">
               <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="sm:hidden">
               <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
@@ -38,13 +48,19 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
                 <span>{user.rating} ({user.reviews} reviews)</span>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2 my-2">{user.bio}</p>
-             <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
+             <div className="flex flex-wrap gap-1 justify-center sm:justify-start mt-2">
                 <span className="text-sm font-semibold mr-1">Offers:</span>
                 {user.skillsOffered.slice(0, 4).map((skill) => (
                     <SkillBadge key={skill} skill={skill} />
                 ))}
                 {user.skillsOffered.length > 4 && <SkillBadge skill={`+${user.skillsOffered.length - 4}`} />}
+            </div>
+            <div className="flex flex-wrap gap-1 justify-center sm:justify-start mt-1">
+                <span className="text-sm font-semibold mr-1">Wants:</span>
+                {user.skillsWanted.slice(0, 4).map((skill) => (
+                    <SkillBadge key={skill} skill={skill} variant="outline" />
+                ))}
+                {user.skillsWanted.length > 4 && <SkillBadge skill={`+${user.skillsWanted.length - 4}`} variant="outline" />}
             </div>
           </div>
           <Link href={`/users/${user.id}`} className="w-full sm:w-auto">
@@ -62,7 +78,7 @@ export function UserCard({ user, layout = "vertical" }: UserCardProps) {
       <CardHeader className="flex flex-row items-center gap-4">
         <Avatar className="h-14 w-14">
           <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div>
           <CardTitle className="text-lg font-headline">{user.name}</CardTitle>

@@ -23,6 +23,14 @@ function getStatusBadge(status: SwapRequest['status']) {
   }
 }
 
+const getInitials = (name: string) => {
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 export function RequestCard({ request, type }: { request: SwapRequest, type: 'incoming' | 'outgoing' }) {
   const [formattedDate, setFormattedDate] = useState('');
   
@@ -36,6 +44,8 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
 
   if (!otherUser) return null;
 
+  const initials = getInitials(otherUser.name);
+
   return (
     <Card>
       <CardHeader>
@@ -43,7 +53,7 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
             <div className="flex items-center gap-4">
             <Avatar>
                 <AvatarImage src={otherUser.avatarUrl} alt={otherUser.name} />
-                <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div>
                 <CardTitle className="text-base font-headline">

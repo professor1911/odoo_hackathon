@@ -7,12 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Star, Mail, Calendar, Sparkles, Heart } from "lucide-react";
 import { SkillBadge } from "@/components/shared/skill-badge";
 
+const getInitials = (name: string) => {
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 export default function UserProfilePage({ params }: { params: { userId: string } }) {
   const user = users.find((u) => u.id === params.userId);
 
   if (!user) {
     notFound();
   }
+
+  const initials = getInitials(user.name);
 
   return (
     <div className="flex flex-col h-full">
@@ -28,7 +38,7 @@ export default function UserProfilePage({ params }: { params: { userId: string }
                     <div className="flex flex-col md:flex-row items-start gap-6">
                         <Avatar className="h-32 w-32 border-4 border-background shadow-md">
                             <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
-                            <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="text-4xl">{initials}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                             <h2 className="text-3xl font-bold font-headline">{user.name}</h2>
