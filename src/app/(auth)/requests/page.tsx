@@ -8,7 +8,7 @@ import { RequestCard } from "@/components/requests/request-card";
 import { SwapRequest } from "@/lib/types";
 import { useAuth } from "@/context/auth-context";
 import { db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, Unsubscribe } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 
 export default function RequestsPage() {
@@ -18,48 +18,67 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !authUser) {
-      // If auth is loading or there's no user, we are not ready to fetch.
+    if (authLoading) {
       setLoading(true);
       return;
     }
 
+    if (!authUser) {
+      setLoading(false);
+      setIncomingRequests([]);
+      setOutgoingRequests([]);
+      return;
+    }
+
     setLoading(true);
+    let unsubscribeIncoming: Unsubscribe | undefined;
+    let unsubscribeOutgoing: Unsubscribe | undefined;
 
-    // Listener for incoming requests
-    const incomingQuery = query(
-      collection(db, "swapRequests"),
-      where("toUserId", "==", authUser.uid),
-      orderBy("createdAt", "desc")
-    );
-    const unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
-      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
-      setIncomingRequests(requests);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching incoming requests: ", error);
-      setLoading(false);
-    });
+    try {
+      // Listener for incoming requests
+      const incomingQuery = query(
+        collection(db, "swapRequests"),
+        where("toUserId", "==", authUser.uid),
+        orderBy("createdAt", "desc")
+      );
+      unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
+        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+        setIncomingRequests(requests);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching incoming requests: ", error);
+        setLoading(false);
+      });
 
-    // Listener for outgoing requests
-    const outgoingQuery = query(
-      collection(db, "swapRequests"),
-      where("fromUserId", "==", authUser.uid),
-      orderBy("createdAt", "desc")
-    );
-    const unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
-      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
-      setOutgoingRequests(requests);
-      setLoading(false); // Can be set here too
-    }, (error) => {
-      console.error("Error fetching outgoing requests: ", error);
-      setLoading(false);
-    });
+      // Listener for outgoing requests
+      const outgoingQuery = query(
+        collection(db, "swapRequests"),
+        where("fromUserId", "==", authUser.uid),
+        orderBy("createdAt", "desc")
+      );
+      unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
+        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+        setOutgoingRequests(requests);
+        // We can set loading to false in either listener, but doing it in both is fine.
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching outgoing requests: ", error);
+        setLoading(false);
+      });
+    } catch (error) {
+        console.error("Failed to set up listeners:", error);
+        setLoading(false);
+    }
 
     // Cleanup function to unsubscribe from listeners when the component unmounts
+    // or when the auth state changes.
     return () => {
-      unsubscribeIncoming();
-      unsubscribeOutgoing();
+      if (unsubscribeIncoming) {
+        unsubscribeIncoming();
+      }
+      if (unsubscribeOutgoing) {
+        unsubscribeOutgoing();
+      }
     };
 
   }, [authUser, authLoading]);
