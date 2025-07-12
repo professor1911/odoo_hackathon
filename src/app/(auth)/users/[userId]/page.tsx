@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -34,6 +33,7 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     async function fetchUser() {
+      if (!userId) return;
       setLoading(true);
       try {
         const userDocRef = doc(db, "users", userId);
@@ -51,7 +51,7 @@ export default function UserProfilePage() {
       }
     }
 
-    if (!authLoading && userId) {
+    if (!authLoading) {
         fetchUser();
     }
   }, [userId, authLoading]);
@@ -87,7 +87,7 @@ export default function UserProfilePage() {
                         </Avatar>
                         <div className="flex-1">
                             <h2 className="text-3xl font-bold font-headline">{user.name}</h2>
-                            <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+                            <div className="flex items-center gap-4 mt-2 text-muted-foreground flex-wrap">
                                 <div className="flex items-center gap-1">
                                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                                     <span>{user.rating} ({user.reviews} reviews)</span>
