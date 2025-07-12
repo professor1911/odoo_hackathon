@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -32,24 +33,29 @@ interface RequestSwapDialogProps {
 }
 
 export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
-  const { user: authUser } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [skillOffered, setSkillOffered] = useState<string>("");
   const [skillWanted, setSkillWanted] = useState<string>("");
   const [message, setMessage] = useState("");
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    if (authUser) {
+    if (authUser && !authLoading) {
+      setLoadingUser(true);
       const userDocRef = doc(db, "users", authUser.uid);
       getDoc(userDocRef).then((docSnap) => {
         if (docSnap.exists()) {
           setCurrentUser(docSnap.data() as User);
         }
-      });
+      }).finally(() => setLoadingUser(false));
     }
-  }, [authUser]);
+     if (!authUser && !authLoading) {
+      setLoadingUser(false);
+    }
+  }, [authUser, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +68,7 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
         return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       await addDoc(collection(db, "swapRequests"), {
@@ -96,14 +102,14 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
         description: "An unexpected error occurred. Please try again.",
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   
   const isMyProfile = authUser?.uid === targetUser.id;
 
-  if (isMyProfile) {
-    return null; // Don't show the button on your own profile
+  if (isMyProfile || authLoading) {
+    return null; // Don't show the button on your own profile or while auth is loading
   }
 
   return (
@@ -112,68 +118,74 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
         <Button>Request Swap</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Request a Skill Swap with {targetUser.name}</DialogTitle>
-            <DialogDescription>
-              Propose a skill exchange. Select a skill you offer and a skill you want to learn from them.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="skill-offered" className="text-right">
-                You Offer
-              </Label>
-              <Select onValueChange={setSkillOffered} value={skillOffered}>
-                <SelectTrigger id="skill-offered" className="col-span-3">
-                  <SelectValue placeholder="Select a skill" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentUser?.skillsOffered.map((skill) => (
-                    <SelectItem key={skill} value={skill}>
-                      {skill}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {loadingUser ? (
+            <div className="flex items-center justify-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="skill-wanted" className="text-right">
-                You Want
-              </Label>
-               <Select onValueChange={setSkillWanted} value={skillWanted}>
-                <SelectTrigger id="skill-wanted" className="col-span-3">
-                  <SelectValue placeholder="Select a skill" />
-                </SelectTrigger>
-                <SelectContent>
-                  {targetUser.skillsOffered.map((skill) => (
-                    <SelectItem key={skill} value={skill}>
-                      {skill}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        ) : (
+            <form onSubmit={handleSubmit}>
+            <DialogHeader>
+                <DialogTitle>Request a Skill Swap with {targetUser.name}</DialogTitle>
+                <DialogDescription>
+                Propose a skill exchange. Select a skill you offer and a skill you want to learn from them.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="skill-offered" className="text-right">
+                    You Offer
+                </Label>
+                <Select onValueChange={setSkillOffered} value={skillOffered}>
+                    <SelectTrigger id="skill-offered" className="col-span-3">
+                    <SelectValue placeholder="Select a skill" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {currentUser?.skillsOffered.map((skill) => (
+                        <SelectItem key={skill} value={skill}>
+                        {skill}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="skill-wanted" className="text-right">
+                    You Want
+                </Label>
+                <Select onValueChange={setSkillWanted} value={skillWanted}>
+                    <SelectTrigger id="skill-wanted" className="col-span-3">
+                    <SelectValue placeholder="Select a skill" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {targetUser.skillsOffered.map((skill) => (
+                        <SelectItem key={skill} value={skill}>
+                        {skill}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="message" className="text-right pt-2">
+                    Message
+                </Label>
+                <Textarea
+                    id="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="col-span-3"
+                    placeholder={`Hi ${targetUser.name}, I'd love to trade skills...`}
+                />
+                </div>
             </div>
-            <div className="grid grid-cols-4 items-start gap-4">
-               <Label htmlFor="message" className="text-right pt-2">
-                Message
-              </Label>
-              <Textarea
-                id="message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="col-span-3"
-                placeholder={`Hi ${targetUser.name}, I'd love to trade skills...`}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? "Sending..." : "Send Request"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+                <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? "Sending..." : "Send Request"}
+                </Button>
+            </DialogFooter>
+            </form>
+        )}
       </DialogContent>
     </Dialog>
   );

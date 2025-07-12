@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from '@/context/auth-context';
 
 function getStatusBadge(status: SwapRequest['status']) {
   switch (status) {
@@ -37,9 +39,11 @@ const getInitials = (name: string) => {
 };
 
 export function RequestCard({ request, type }: { request: SwapRequest, type: 'incoming' | 'outgoing' }) {
+  const { loading: authLoading } = useAuth();
   const [formattedDate, setFormattedDate] = useState('');
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     // This will only run on the client, after initial hydration
@@ -50,18 +54,19 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
 
   useEffect(() => {
     const otherUserId = type === 'incoming' ? request.fromUserId : request.toUserId;
-    if (otherUserId) {
+    if (otherUserId && !authLoading) {
+        setLoading(true);
         const userDocRef = doc(db, "users", otherUserId);
         getDoc(userDocRef).then(docSnap => {
             if (docSnap.exists()) {
                 setOtherUser(docSnap.data() as User);
             }
-        });
+        }).finally(() => setLoading(false));
     }
-  }, [request, type]);
+  }, [request, type, authLoading]);
 
   const handleRequestUpdate = async (newStatus: 'accepted' | 'rejected') => {
-    setLoading(true);
+    setActionLoading(true);
     try {
         const requestDocRef = doc(db, 'swapRequests', request.id);
         await updateDoc(requestDocRef, { status: newStatus });
@@ -77,11 +82,11 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
             description: "Could not update the request status. Please try again."
         })
     } finally {
-        setLoading(false);
+        setActionLoading(false);
     }
   };
 
-  if (!otherUser) {
+  if (loading || authLoading || !otherUser) {
     return (
         <Card className="h-48 flex items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -126,12 +131,12 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
       </CardContent>
       {type === 'incoming' && request.status === 'pending' && (
         <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleRequestUpdate('rejected')} disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
+            <Button variant="outline" onClick={() => handleRequestUpdate('rejected')} disabled={actionLoading}>
+                {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <X className="mr-2 h-4 w-4" />}
                 Reject
             </Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleRequestUpdate('accepted')} disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleRequestUpdate('accepted')} disabled={actionLoading}>
+                {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                 Accept
             </Button>
         </CardFooter>

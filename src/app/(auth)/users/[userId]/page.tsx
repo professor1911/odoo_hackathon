@@ -6,12 +6,13 @@ import { notFound, useParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, Mail, Calendar, Sparkles, Heart } from "lucide-react";
+import { Star, Mail, Calendar, Sparkles, Heart, Loader2 } from "lucide-react";
 import { SkillBadge } from "@/components/shared/skill-badge";
 import { User } from "@/lib/types";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { RequestSwapDialog } from "@/components/requests/request-swap-dialog";
+import { useAuth } from "@/context/auth-context";
 
 const getInitials = (name: string) => {
   if (!name) return "";
@@ -25,34 +26,39 @@ const getInitials = (name: string) => {
 export default function UserProfilePage() {
   const params = useParams();
   const userId = params.userId as string;
+  const { user: authUser, loading: authLoading } = useAuth();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchUser() {
-      if (!userId) return;
+      if (!userId || authLoading) return;
+      setLoading(true);
       try {
         const userDocRef = doc(db, "users", userId);
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
           setUser(userDocSnap.data() as User);
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error("Error fetching user:", error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
     }
 
     fetchUser();
-  }, [userId]);
+  }, [userId, authLoading]);
 
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
         <div className="flex justify-center items-center h-full">
-            <div className="animate-pulse">Loading profile...</div>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
   }
