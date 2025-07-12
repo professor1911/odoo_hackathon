@@ -42,31 +42,51 @@ const getInitials = (name: string) => {
 export function RequestCard({ request, type }: { request: SwapRequest, type: 'incoming' | 'outgoing' }) {
   const { user: authUser, loading: authLoading } = useAuth();
   const [formattedDate, setFormattedDate] = useState('');
-  const [otherUser, setOtherUser] = useState<User | null>(null);
+  const [otherUser, setOtherUser] = useState<Partial<User> | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     // This will only run on the client, after initial hydration
     if (request.createdAt) {
-      setFormattedDate(formatDistanceToNow(new Date(request.createdAt), { addSuffix: true }));
+      // Assuming createdAt is a Firestore timestamp, convert to Date
+      const date = typeof request.createdAt === 'string' 
+        ? new Date(request.createdAt)
+        // @ts-ignore
+        : request.createdAt?.toDate?.();
+
+      if (date) {
+        setFormattedDate(formatDistanceToNow(date, { addSuffix: true }));
+      }
     }
   }, [request.createdAt]);
 
   useEffect(() => {
     const otherUserId = type === 'incoming' ? request.fromUserId : request.toUserId;
-    if (otherUserId && !authLoading) {
+    const name = type === 'incoming' ? request.fromUserName : request.toUserName;
+    const avatar = type === 'incoming' ? request.fromUserAvatar : request.toUserAvatar;
+    
+    async function fetchOtherUser() {
+      if (otherUserId) {
         setLoading(true);
+        // Use cached details if available
+        if (name && avatar) {
+            setOtherUser({ id: otherUserId, name, avatarUrl: avatar });
+            setLoading(false);
+            return;
+        }
+        // Fallback to fetch from DB
         const userDocRef = doc(db, "users", otherUserId);
-        getDoc(userDocRef).then(docSnap => {
-            if (docSnap.exists()) {
-                setOtherUser(docSnap.data() as User);
-            }
-        }).finally(() => setLoading(false));
-    } else if (authLoading) {
-        setLoading(true);
-    } else {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            setOtherUser(docSnap.data() as User);
+        }
         setLoading(false);
+      }
+    }
+
+    if (!authLoading) {
+        fetchOtherUser();
     }
   }, [request, type, authLoading]);
 
@@ -99,7 +119,7 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
     );
   }
 
-  const initials = getInitials(otherUser.name);
+  const initials = getInitials(otherUser.name || '');
 
   return (
     <Card>

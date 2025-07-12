@@ -19,5 +19,10 @@ export interface SwapRequest {
   skillWanted: string;
   status: 'pending' | 'accepted' | 'rejected' | 'completed';
   message: string;
-  createdAt: string;
+  createdAt: string; // Should be ISO string or Timestamp
+  // Cache user details to reduce lookups
+  fromUserName?: string;
+  fromUserAvatar?: string;
+  toUserName?: string;
+  toUserAvatar?: string;
 }

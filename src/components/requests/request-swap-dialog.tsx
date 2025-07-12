@@ -56,7 +56,7 @@ export function RequestSwapDialog({ targetUser }: RequestSwapDialogProps) {
         }
     }
     
-    if (!authLoading) {
+    if (!authLoading && authUser) {
         fetchCurrentUser();
     } else {
         setLoadingUser(true);
