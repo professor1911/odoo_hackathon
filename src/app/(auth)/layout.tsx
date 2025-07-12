@@ -1,4 +1,5 @@
 import AppSidebar from "@/components/layout/sidebar";
+import { NewRequestNotifier } from "@/components/notifications/new-request-notifier";
 
 export default function AuthLayout({
   children,
@@ -11,6 +12,7 @@ export default function AuthLayout({
       <main className="flex-1">
         {children}
       </main>
+      <NewRequestNotifier />
     </div>
   );
 }
