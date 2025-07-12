@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,7 +56,7 @@ export function RegisterForm() {
         id: user.uid,
         name: values.name,
         email: values.email,
-        avatarUrl: '', // Will be updated later
+        avatarUrl: `https://placehold.co/100x100.png`,
         bio: 'Welcome to Skillshare! Please update your bio.',
         skillsOffered: [],
         skillsWanted: [],
