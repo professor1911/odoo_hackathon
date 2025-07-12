@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow reading of any user profile, but only the user themselves can update their profile.
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow reading of swap requests if the user is part of the request.
+    // Allow creating a request if the user is the sender.
+    // Allow updating a request if the user is the recipient (to accept/reject).
+    match /swapRequests/{requestId} {
+      allow read: if request.auth != null && (request.auth.uid == resource.data.fromUserId || request.auth.uid == resource.data.toUserId);
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.fromUserId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.toUserId;
+      // Deleting can be restricted as needed, for now let's prevent it.
+      allow delete: if false;
+    }
+  }
+}
