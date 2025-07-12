@@ -1,16 +1,62 @@
 import Link from "next/link";
 import { User } from "@/lib/types";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
 import { SkillBadge } from "@/components/shared/skill-badge";
+import { cn } from "@/lib/utils";
 
 interface UserCardProps {
   user: User;
+  layout?: "vertical" | "horizontal";
 }
 
-export function UserCard({ user }: UserCardProps) {
+export function UserCard({ user, layout = "vertical" }: UserCardProps) {
+  if (layout === "horizontal") {
+    return (
+       <Card className="transition-shadow hover:shadow-md">
+        <div className="flex flex-col sm:flex-row items-center p-4 gap-4">
+          <div className="flex items-center gap-4 flex-shrink-0">
+             <Avatar className="h-16 w-16">
+              <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person" />
+              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="sm:hidden">
+              <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span>{user.rating} ({user.reviews} reviews)</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <div className="hidden sm:block">
+              <CardTitle className="text-lg font-headline">{user.name}</CardTitle>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span>{user.rating} ({user.reviews} reviews)</span>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2 my-2">{user.bio}</p>
+             <div className="flex flex-wrap gap-1 justify-center sm:justify-start">
+                <span className="text-sm font-semibold mr-1">Offers:</span>
+                {user.skillsOffered.slice(0, 4).map((skill) => (
+                    <SkillBadge key={skill} skill={skill} />
+                ))}
+                {user.skillsOffered.length > 4 && <SkillBadge skill={`+${user.skillsOffered.length - 4}`} />}
+            </div>
+          </div>
+          <Link href={`/users/${user.id}`} className="w-full sm:w-auto">
+            <Button className="w-full font-semibold">
+              View Profile <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </Card>
+    )
+  }
+
   return (
     <Card className="flex flex-col h-full transition-transform transform hover:-translate-y-1 hover:shadow-xl">
       <CardHeader className="flex flex-row items-center gap-4">
