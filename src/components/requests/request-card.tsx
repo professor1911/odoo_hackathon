@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { swapRequests, users } from "@/lib/data";
-import { SwapRequest, User } from "@/lib/types";
+import { users } from "@/lib/data";
+import { SwapRequest } from "@/lib/types";
 import { ArrowRight, Check, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -27,6 +27,7 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
   const [formattedDate, setFormattedDate] = useState('');
   
   useEffect(() => {
+    // This will only run on the client, after initial hydration
     setFormattedDate(formatDistanceToNow(new Date(request.createdAt), { addSuffix: true }));
   }, [request.createdAt]);
 
@@ -48,7 +49,7 @@ export function RequestCard({ request, type }: { request: SwapRequest, type: 'in
                 <CardTitle className="text-base font-headline">
                     {type === 'incoming' ? `${otherUser.name} sent you a request` : `You sent a request to ${otherUser.name}`}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                <p className="text-sm text-muted-foreground">{formattedDate || '...'}</p>
             </div>
             </div>
             {getStatusBadge(request.status)}
