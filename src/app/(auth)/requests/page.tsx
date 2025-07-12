@@ -18,75 +18,65 @@ export default function RequestsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If auth is still loading, do nothing and show the loading spinner.
     if (authLoading) {
+      // Auth state is still being determined, so we wait.
       setLoading(true);
       return;
     }
 
-    // If there is no authenticated user, clear the requests and stop loading.
     if (!authUser) {
+      // If there's no user, clear data and stop loading.
       setIncomingRequests([]);
       setOutgoingRequests([]);
       setLoading(false);
       return;
     }
-    
-    // This effect handles setting up the Firestore listeners.
-    // It will only run when authUser.uid is available and will clean up on unmount.
-    let unsubscribeIncoming: Unsubscribe | undefined;
-    let unsubscribeOutgoing: Unsubscribe | undefined;
 
-    try {
-      setLoading(true);
+    // At this point, we have an authenticated user.
+    // Set up the real-time listeners.
+    setLoading(true);
 
-      // Listener for incoming requests
-      const incomingQuery = query(
-        collection(db, "swapRequests"),
-        where("toUserId", "==", authUser.uid),
-        orderBy("createdAt", "desc")
-      );
-      unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
-        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
-        setIncomingRequests(requests);
-        setLoading(false); // Set loading to false once initial data is received
-      }, (error) => {
-        console.error("Error fetching incoming requests: ", error);
-        setLoading(false);
-      });
+    const requestsRef = collection(db, "swapRequests");
 
-      // Listener for outgoing requests
-      const outgoingQuery = query(
-        collection(db, "swapRequests"),
-        where("fromUserId", "==", authUser.uid),
-        orderBy("createdAt", "desc")
-      );
-      unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
-        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
-        setOutgoingRequests(requests);
-        // Do not set loading to false here again, to avoid flickering if one listener returns after the other.
-        // The loading state is primarily for the initial page load.
-      }, (error) => {
-        console.error("Error fetching outgoing requests: ", error);
-        setLoading(false);
-      });
+    // Listener for incoming requests
+    const incomingQuery = query(
+      requestsRef,
+      where("toUserId", "==", authUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribeIncoming = onSnapshot(incomingQuery, (querySnapshot) => {
+      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+      setIncomingRequests(requests);
+      setLoading(false); // Stop loading after the first data comes in.
+    }, (error) => {
+      console.error("Error fetching incoming requests: ", error);
+      setLoading(false);
+    });
 
-    } catch (error) {
-        console.error("Failed to set up listeners:", error);
-        setLoading(false);
-    }
+    // Listener for outgoing requests
+    const outgoingQuery = query(
+      requestsRef,
+      where("fromUserId", "==", authUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribeOutgoing = onSnapshot(outgoingQuery, (querySnapshot) => {
+      const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SwapRequest));
+      setOutgoingRequests(requests);
+      // We don't set loading to false here again to avoid potential race conditions.
+      // The first listener to return data will handle it.
+    }, (error) => {
+      console.error("Error fetching outgoing requests: ", error);
+      setLoading(false);
+    });
 
-    // Cleanup function to unsubscribe from listeners when the component unmounts
-    // or when the authUser changes. This is crucial to prevent memory leaks and errors.
+    // This is the cleanup function.
+    // It runs when the component unmounts or when authUser changes.
+    // This is crucial to prevent memory leaks and Firestore errors.
     return () => {
-      if (unsubscribeIncoming) {
-        unsubscribeIncoming();
-      }
-      if (unsubscribeOutgoing) {
-        unsubscribeOutgoing();
-      }
+      unsubscribeIncoming();
+      unsubscribeOutgoing();
     };
-  }, [authUser, authLoading]);
+  }, [authUser, authLoading]); // Rerun this effect if the user or auth loading state changes.
 
   return (
     <div className="flex flex-col h-full">
@@ -95,40 +85,38 @@ export default function RequestsPage() {
         description="Manage your incoming and outgoing skill swap proposals."
       />
       <div className="p-6 flex-1 overflow-auto">
-        <Tabs defaultValue="incoming" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-            <TabsTrigger value="incoming">Incoming ({incomingRequests.length})</TabsTrigger>
-            <TabsTrigger value="outgoing">Outgoing ({outgoingRequests.length})</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="incoming">
-            <div className="space-y-4 max-w-3xl mx-auto pt-4">
-              {loading ? (
-                 <div className="flex justify-center items-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                 </div>
-              ) : incomingRequests.length > 0 ? (
-                incomingRequests.map(req => <RequestCard key={req.id} request={req} type="incoming" />)
-              ) : (
-                <p className="text-center text-muted-foreground py-10">No incoming requests yet.</p>
-              )}
+        {loading ? (
+            <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          </TabsContent>
-
-          <TabsContent value="outgoing">
-             <div className="space-y-4 max-w-3xl mx-auto pt-4">
-                {loading && incomingRequests.length === 0 ? ( // Only show loader if the page is still loading initially
-                    <div className="flex justify-center items-center py-20">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                ) : outgoingRequests.length > 0 ? (
-                    outgoingRequests.map(req => <RequestCard key={req.id} request={req} type="outgoing" />)
+        ) : (
+          <Tabs defaultValue="incoming" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="incoming">Incoming ({incomingRequests.length})</TabsTrigger>
+              <TabsTrigger value="outgoing">Outgoing ({outgoingRequests.length})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="incoming">
+              <div className="space-y-4 max-w-3xl mx-auto pt-4">
+                {incomingRequests.length > 0 ? (
+                  incomingRequests.map(req => <RequestCard key={req.id} request={req} type="incoming" />)
                 ) : (
-                    <p className="text-center text-muted-foreground py-10">You haven't sent any requests.</p>
+                  <p className="text-center text-muted-foreground py-10">No incoming requests yet.</p>
                 )}
-            </div>
-          </TabsContent>
-        </Tabs>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="outgoing">
+              <div className="space-y-4 max-w-3xl mx-auto pt-4">
+                  {outgoingRequests.length > 0 ? (
+                      outgoingRequests.map(req => <RequestCard key={req.id} request={req} type="outgoing" />)
+                  ) : (
+                      <p className="text-center text-muted-foreground py-10">You haven't sent any requests.</p>
+                  )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
